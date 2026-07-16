@@ -36,6 +36,21 @@
   margin-bottom: 8px;
 }
 
+.rarity {
+  display: inline-block;
+  padding: 3px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.rarity-common { color: var(--text-muted); }
+.rarity-uncommon { color: #74c69d; }
+.rarity-rare { color: #48cae4; }
+.rarity-legendary { color: var(--accent); }
+
 .enemy-emoji {
   font-size: 5rem;
   line-height: 1.1;
@@ -76,7 +91,33 @@
 }
 
 .combat-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
   margin: 16px 0;
+}
+
+.combat-actions .btn-large {
+  width: 100%;
+}
+
+.btn-run {
+  background: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  padding-inline: 12px;
+}
+
+.encounter-status {
+  min-height: 18px;
+  margin: -8px 0 12px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.encounter-status.danger {
+  color: var(--danger);
 }
 
 .abilities {

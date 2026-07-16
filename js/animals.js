@@ -154,10 +154,31 @@ function getAnimalStats(index) {
   };
 }
 
+const RARITY_CONFIG = {
+  common: { label: 'Common', weight: 60, xpMultiplier: 1, goldMultiplier: 1 },
+  uncommon: { label: 'Uncommon', weight: 25, xpMultiplier: 1.35, goldMultiplier: 1.25 },
+  rare: { label: 'Rare', weight: 10, xpMultiplier: 2, goldMultiplier: 1.75 },
+  legendary: { label: 'Legendary', weight: 3, xpMultiplier: 4, goldMultiplier: 3 },
+};
+
+const LEGENDARY_ANIMALS = new Set([0, 2, 16, 17, 84]);
+const RARE_ANIMALS = new Set([1, 4, 8, 10, 11, 12, 14, 15, 22, 31, 32, 44, 58, 63, 64, 76, 85, 86, 104, 105]);
+
+function getAnimalRarity(animalIndex) {
+  if (LEGENDARY_ANIMALS.has(animalIndex)) return 'legendary';
+  if (RARE_ANIMALS.has(animalIndex)) return 'rare';
+  if (animalIndex < 45 || animalIndex % 4 === 0) return 'uncommon';
+  return 'common';
+}
+
 function getXpReward(animalIndex, killCount) {
-  return Math.floor(10 + animalIndex * 2 + killCount * 0.1);
+  const difficulty = ANIMALS.length - animalIndex;
+  const rarity = RARITY_CONFIG[getAnimalRarity(animalIndex)];
+  return Math.floor((8 + difficulty * 1.5 + killCount * 0.1) * rarity.xpMultiplier);
 }
 
 function getGoldReward(animalIndex) {
-  return Math.floor(5 + animalIndex);
+  const difficulty = ANIMALS.length - animalIndex;
+  const rarity = RARITY_CONFIG[getAnimalRarity(animalIndex)];
+  return Math.floor((4 + difficulty * 0.35) * rarity.goldMultiplier);
 }

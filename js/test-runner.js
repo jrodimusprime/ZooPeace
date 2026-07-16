@@ -18,16 +18,16 @@ const TestRunner = {
     this.assert(KILLS_PER_ANIMAL === 100, '100 kills per animal');
 
     const save = createDefaultSave();
-    this.assert(save.currentAnimalIndex === 0, 'starts at animal 0');
-    this.assert(isAnimalUnlocked(save, 0), 'first animal unlocked');
-    this.assert(!isAnimalUnlocked(save, 1), 'second animal locked');
+    this.assert(save.currentAnimalIndex === ANIMALS.length - 1, 'starts among smallest animals');
+    this.assert(!isAnimalUnlocked(save, 0), 'whale is locked for a new player');
+    this.assert(isAnimalUnlocked(save, 109), 'small animals are unlocked first');
+    this.assert(getUnlockedAnimalCount(save) === 15, 'level 1 has 15 possible encounters');
 
-    for (let i = 0; i < 100; i++) recordKill(save, 0);
-    this.assert(isAnimalUnlocked(save, 1), 'second animal unlocks after 100 kills');
-    this.assert(canProgress(save), 'can progress after 100 kills');
+    const firstEncounter = selectNextEncounter(save, -1, () => 0.5);
+    this.assert(firstEncounter >= 95, 'level 1 encounter stays in small-animal pool');
 
-    advanceAnimal(save);
-    this.assert(save.currentAnimalIndex === 1, 'advances to next animal');
+    save.level = 33;
+    this.assert(isAnimalUnlocked(save, 0), 'XP level eventually unlocks whale encounters');
 
     const whale = getAnimalStats(0);
     this.assert(whale.hp > 0 && whale.atk > 0, 'animal stats computed');
@@ -35,6 +35,8 @@ const TestRunner = {
     const xp1 = getXpReward(0, 1);
     const xp50 = getXpReward(0, 50);
     this.assert(xp50 > xp1, 'XP scales with kill count');
+    this.assert(getXpReward(0, 1) > getXpReward(109, 1), 'legendary whale grants more XP');
+    this.assert(getAnimalRarity(0) === 'legendary', 'whale is legendary rarity');
 
     const cost1 = getUpgradeCost('attack', 1);
     const cost10 = getUpgradeCost('attack', 10);

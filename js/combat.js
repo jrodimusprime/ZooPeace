@@ -4,6 +4,7 @@ const Combat = (() => {
   let onUpdate = null;
   let onVictory = null;
   let onDefeat = null;
+  let onFlee = null;
   let tapBoostActive = false;
   let tapBoostCooldown = 0;
   let abilityCooldowns = { calmStrike: 0, shieldBreath: 0, peaceTreaty: 0 };
@@ -27,6 +28,7 @@ const Combat = (() => {
     onUpdate = callbacks.onUpdate;
     onVictory = callbacks.onVictory;
     onDefeat = callbacks.onDefeat;
+    onFlee = callbacks.onFlee;
 
     const playerStats = getPlayerCombatStats(save);
     const animalData = getAnimalStats(save.currentAnimalIndex);
@@ -77,6 +79,20 @@ const Combat = (() => {
     tapBoostCooldown = 5;
     doPlayerAttack(true);
     notify();
+  }
+
+  function flee() {
+    if (!state || state.enemy.hp <= 0 || state.playerHp <= 0) return false;
+    const success = !state.fighting || Math.random() < 0.7;
+    if (success) {
+      state.fighting = false;
+      engaged = false;
+    } else {
+      doEnemyAttack();
+    }
+    if (onFlee) onFlee(success);
+    notify();
+    return success;
   }
 
   function useAbility(abilityId) {
@@ -215,6 +231,7 @@ const Combat = (() => {
     stopCombat,
     engage,
     tapStrike,
+    flee,
     useAbility,
     resetEnemy,
     isActive,

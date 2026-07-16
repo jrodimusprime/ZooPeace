@@ -38,7 +38,7 @@ node scripts/run-tests.js
 | ID | Test | Command / How |
 |----|------|----------------|
 | A1 | Animal roster count | `node scripts/run-tests.js` |
-| A2 | Kill unlock chain | same |
+| A2 | XP-gated encounter pool | same |
 | A3 | XP / gold scaling | same |
 | A4 | Upgrade cost scaling | same |
 | A5 | Level-up + ability unlock | same |
@@ -91,10 +91,14 @@ document.getElementById('btn-strike')?.click();
 | ID | Step | Expected |
 |----|------|----------|
 | P1 | Check kill bar | Shows `N / 100` for current animal |
-| P2 | Simulate 100 kills (console below) | Next animal unlocks, unlock message on victory |
+| P2 | Start at level 1 | Only the 15 smallest animals can appear |
 | P3 | Open **Map** tab | Tier headers, locked 🔒, current highlighted |
 | P4 | Pacify animal (100 kills) | Map cell gets green border |
 | P5 | Overall stats | Stats tab shows `X / 110` pacified, `Y / 11000` defeats |
+| P6 | Gain levels | Three additional, larger species enter the encounter pool per level |
+| P7 | Run before engaging | Escape succeeds and a different encounter appears |
+| P8 | Run during combat repeatedly | Roughly 70% succeed; failure causes a free enemy attack |
+| P9 | Compare rarity rewards | Rare and legendary animals award bonus XP and gold |
 
 **Simulate 100 kills (console):**
 
@@ -182,7 +186,8 @@ location.reload();
 - [ ] `node scripts/run-tests.js` passes
 - [ ] Fresh onboarding works
 - [ ] Victory message always says "One Step Closer to Peace" (except finale)
-- [ ] 100-kill gate blocks next animal
+- [ ] Level 1 cannot encounter a whale or other large animal
+- [ ] Each animal still requires 100 victories for full pacification
 - [ ] Save survives refresh
 - [ ] No console errors during 10-fight session
 - [ ] Phone playtest: one-thumb usable

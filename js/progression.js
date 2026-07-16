@@ -15,29 +15,47 @@ function resetWinStreak(save) {
 }
 
 function isAnimalUnlocked(save, animalIndex) {
-  if (animalIndex === 0) return true;
-  const prevKills = getKillCount(save, animalIndex - 1);
-  return prevKills >= KILLS_PER_ANIMAL;
+  return animalIndex >= getUnlockedAnimalStartIndex(save);
 }
 
 function isAnimalPacified(save, animalIndex) {
   return getKillCount(save, animalIndex) >= KILLS_PER_ANIMAL;
 }
 
-function canProgress(save) {
-  const kills = getKillCount(save, save.currentAnimalIndex);
-  return kills >= KILLS_PER_ANIMAL && save.currentAnimalIndex < ANIMALS.length - 1;
+function getUnlockedAnimalCount(save) {
+  return Math.min(ANIMALS.length, 15 + Math.max(0, save.level - 1) * 3);
 }
 
-function advanceAnimal(save) {
-  if (!canProgress(save)) return false;
-  save.currentAnimalIndex += 1;
-  return true;
+function getUnlockedAnimalStartIndex(save) {
+  return ANIMALS.length - getUnlockedAnimalCount(save);
+}
+
+function selectNextEncounter(save, excludeIndex = -1, random = Math.random) {
+  const start = getUnlockedAnimalStartIndex(save);
+  const candidates = [];
+  let totalWeight = 0;
+
+  for (let index = start; index < ANIMALS.length; index++) {
+    if (index === excludeIndex && ANIMALS.length - start > 1) continue;
+    const rarity = getAnimalRarity(index);
+    let weight = RARITY_CONFIG[rarity].weight;
+    const kills = getKillCount(save, index);
+    if (kills >= KILLS_PER_ANIMAL) weight *= 0.15;
+    totalWeight += weight;
+    candidates.push({ index, weight });
+  }
+
+  let roll = random() * totalWeight;
+  for (const candidate of candidates) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate.index;
+  }
+  return candidates[candidates.length - 1].index;
 }
 
 function checkGameComplete(save) {
-  const lastIdx = ANIMALS.length - 1;
-  if (getKillCount(save, lastIdx) >= KILLS_PER_ANIMAL) {
+  const allPacified = ANIMALS.every((_, index) => isAnimalPacified(save, index));
+  if (allPacified) {
     save.gameComplete = true;
     return true;
   }

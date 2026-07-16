@@ -13,6 +13,7 @@ const UI = (() => {
     $('#btn-begin')?.addEventListener('click', onBegin);
     $('#btn-engage')?.addEventListener('click', () => Combat.engage());
     $('#btn-strike')?.addEventListener('click', () => Combat.tapStrike());
+    $('#btn-run')?.addEventListener('click', () => Combat.flee());
     $('#btn-continue')?.addEventListener('click', hideVictoryModal);
     $('#btn-defeat-ok')?.addEventListener('click', hideDefeatModal);
 
@@ -104,11 +105,17 @@ const UI = (() => {
 
   function startGame() {
     tickPassiveXp(save);
+    if (!save.encounterInitialized) {
+      save.currentAnimalIndex = selectNextEncounter(save);
+      save.encounterInitialized = true;
+      writeSave(save);
+    }
     renderAll();
     Combat.startCombat(save, {
       onUpdate: updateCombatUI,
       onVictory: handleVictory,
       onDefeat: handleDefeat,
+      onFlee: handleFlee,
     });
     switchTab('fight');
   }
@@ -121,12 +128,10 @@ const UI = (() => {
   }
 
   function renderFightHeader() {
-    const stats = getPlayerCombatStats(save);
     $('#header-name').textContent = `${save.avatar} ${save.playerName}`;
     $('#header-level').textContent = `Lv. ${save.level}`;
     $('#header-title').textContent = getPlayerTitle(save);
     $('#header-gold').textContent = `🪙 ${save.gold}`;
-    $('#header-hp-text').textContent = `${stats.maxHp}`;
     $('#player-xp-bar').style.width = `${(save.xp / xpForLevel(save.level)) * 100}%`;
     $('#player-xp-text').textContent = `${save.xp} / ${xpForLevel(save.level)} XP`;
   }
@@ -140,6 +145,9 @@ const UI = (() => {
     $('#enemy-emoji').textContent = animal.emoji;
     $('#enemy-name').textContent = animal.name;
     $('#enemy-tier').textContent = TIER_NAMES[animal.tier];
+    const rarity = getAnimalRarity(idx);
+    $('#enemy-rarity').textContent = RARITY_CONFIG[rarity].label;
+    $('#enemy-rarity').className = `rarity rarity-${rarity}`;
     $('#kill-count').textContent = `${kills} / ${KILLS_PER_ANIMAL}`;
     $('#kill-bar').style.width = `${(kills / KILLS_PER_ANIMAL) * 100}%`;
 
@@ -208,6 +216,7 @@ const UI = (() => {
 
   function handleVictory() {
     const idx = save.currentAnimalIndex;
+    const unlockedBefore = getUnlockedAnimalCount(save);
     const killNum = recordKill(save, idx);
     const xp = getXpReward(idx, killNum);
     const gold = getGoldReward(idx);
@@ -220,11 +229,11 @@ const UI = (() => {
     }
     addXp(save, xpGain);
     save.gold += goldGain;
+    const unlockedAfter = getUnlockedAnimalCount(save);
 
     const streakBonus = save.winStreak >= 10 ? Math.floor(goldGain * 0.2) : 0;
     save.gold += streakBonus;
 
-    if (canProgress()) advanceAnimal();
     checkGameComplete(save);
     writeSave(save);
 
@@ -233,8 +242,11 @@ const UI = (() => {
     $('#victory-gold').textContent = `+${goldGain + streakBonus} Gold`;
     $('#victory-kills').textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name}: ${killNum} / ${KILLS_PER_ANIMAL}`;
 
-    if (killNum === KILLS_PER_ANIMAL && idx < ANIMALS.length - 1) {
-      $('#victory-unlock').textContent = `Unlocked: ${ANIMALS[idx + 1].emoji} ${ANIMALS[idx + 1].name}!`;
+    if (unlockedAfter > unlockedBefore) {
+      $('#victory-unlock').textContent = `${unlockedAfter - unlockedBefore} new animal encounters unlocked by your XP!`;
+      $('#victory-unlock').classList.remove('hidden');
+    } else if (killNum === KILLS_PER_ANIMAL) {
+      $('#victory-unlock').textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name} fully pacified!`;
       $('#victory-unlock').classList.remove('hidden');
     } else {
       $('#victory-unlock').classList.add('hidden');
@@ -253,8 +265,28 @@ const UI = (() => {
     if (save.gameComplete) {
       $('#finale-overlay').classList.remove('hidden');
     }
+    const previous = save.currentAnimalIndex;
+    save.currentAnimalIndex = selectNextEncounter(save, previous);
+    writeSave(save);
     Combat.resetEnemy();
     renderFight();
+  }
+
+  function handleFlee(success) {
+    const status = $('#encounter-status');
+    if (!success) {
+      status.textContent = 'Could not escape! The animal gets a free attack.';
+      status.className = 'encounter-status danger';
+      return;
+    }
+
+    const previous = save.currentAnimalIndex;
+    save.currentAnimalIndex = selectNextEncounter(save, previous);
+    writeSave(save);
+    Combat.resetEnemy();
+    renderFight();
+    status.textContent = `Escaped safely. You encountered ${ANIMALS[save.currentAnimalIndex].emoji} ${ANIMALS[save.currentAnimalIndex].name}.`;
+    status.className = 'encounter-status';
   }
 
   function handleDefeat() {
