@@ -1,6 +1,28 @@
 .player-hp-section {
-  margin-bottom: 12px;
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.player-hp-section .hp-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.player-hp-section .hp-bar-wrap {
+  flex: 1;
+  margin: 0;
+  height: 8px;
+}
+
+.player-hp-section .hp-value {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-size: 0.7rem;
 }
 
 .hp-bar {
@@ -12,38 +34,59 @@
 .enemy-hp { background: var(--hp-enemy); width: 100%; }
 
 .hp-bar-wrap {
-  margin: 4px 0;
-  height: 14px;
+  margin: 0;
+  height: 10px;
 }
 
 .shield {
-  display: inline-block;
+  flex-shrink: 0;
   color: var(--xp);
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
 }
 
+/* Creature region: sprite + info side-by-side (no card chrome) */
 .arena {
-  text-align: center;
-  padding: 12px 0 8px;
+  padding: 4px 0 2px;
+}
+
+.arena-main {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.arena-info {
+  min-width: 0;
+  text-align: left;
+}
+
+.arena-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-bottom: 2px;
 }
 
 .tier-label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  margin: 0;
 }
 
 .rarity {
   display: inline-block;
-  padding: 3px 9px;
+  padding: 1px 6px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
+  line-height: 1.3;
 }
 
 .rarity-common { color: var(--text-muted); }
@@ -52,9 +95,10 @@
 .rarity-legendary { color: var(--accent); }
 
 .enemy-emoji {
-  font-size: 4.5rem;
-  line-height: 1.1;
-  margin: 8px 0;
+  font-size: 2.75rem;
+  line-height: 1;
+  width: 3.1rem;
+  text-align: center;
   transition: transform 0.1s;
 }
 
@@ -69,12 +113,40 @@
 }
 
 #enemy-name {
-  font-size: 1.4rem;
-  margin-bottom: 8px;
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+  line-height: 1.15;
+}
+
+.arena-hp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arena-hp .hp-bar-wrap {
+  flex: 1;
+  height: 8px;
+}
+
+.arena-hp .hp-value {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
 }
 
 .kill-progress {
-  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.kill-progress .kill-bar-wrap {
+  flex: 1;
+  height: 5px;
+  border-radius: 4px;
 }
 
 .kill-bar {
@@ -84,10 +156,11 @@
   transition: width 0.3s;
 }
 
-.kill-progress p {
-  font-size: 0.85rem;
+.kill-label {
+  flex-shrink: 0;
+  font-size: 0.65rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  white-space: nowrap;
 }
 
 /* Pokemon-style battle command panel */
@@ -217,16 +290,16 @@
 .fun-hud {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  margin: 8px 0 4px;
-  min-height: 24px;
+  gap: 4px;
+  justify-content: flex-start;
+  margin: 6px 0 0;
+  min-height: 0;
 }
 
 .fun-chip {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 800;
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 999px;
   background: var(--card);
   color: var(--accent);
@@ -241,14 +314,18 @@
 
 .quirk-badge {
   display: inline-block;
-  margin: 4px 0;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: 0.65rem;
   font-weight: 700;
   color: #f72585;
 }
 
 .screen-fight {
   padding-bottom: calc(var(--nav-height) + 168px) !important;
+}
+
+.fight-footer {
+  margin-top: 6px;
 }
 
 .challenges-section {
@@ -290,11 +367,11 @@
 }
 
 .encounter-status {
-  min-height: 18px;
-  margin: 8px 0 12px;
+  min-height: 0;
+  margin: 0 0 6px;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  text-align: center;
+  font-size: 0.7rem;
+  text-align: left;
 }
 
 .encounter-status.danger {
@@ -314,10 +391,10 @@
 
 .abilities {
   display: flex;
-  gap: 8px;
-  justify-content: center;
+  gap: 6px;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .ability-btn {
@@ -325,25 +402,24 @@
   color: var(--text);
   border: 1px solid var(--primary);
   border-radius: var(--radius);
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  min-height: 36px;
   cursor: pointer;
 }
 
 .fight-stats {
   display: flex;
-  justify-content: space-around;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 12px;
-  font-size: 0.9rem;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 .fight-stats strong {
   color: var(--text);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .victory .peace-message {

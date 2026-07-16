@@ -10,7 +10,7 @@ function detectBrowserLang() {
 
 function createDefaultSave() {
   return {
-    saveVersion: 2,
+    saveVersion: 3,
     playerName: '',
     avatar: '🧑',
     onboarded: false,
@@ -25,6 +25,7 @@ function createDefaultSave() {
     encounterInitialized: false,
     killCounts: {},
     unlockedAbilities: [],
+    unlockFloor: UNLOCK_START_COUNT,
     totalKills: 0,
     winStreak: 0,
     treatBonus: 0,
@@ -36,18 +37,30 @@ function createDefaultSave() {
   };
 }
 
+function migrateSave(data) {
+  const merged = { ...createDefaultSave(), ...data };
+
+  if (!data.saveVersion || data.saveVersion < 2) {
+    merged.encounterInitialized = false;
+    merged.currentAnimalIndex = ANIMALS.length - 1;
+  }
+
+  // v3: batch unlocks. Preserve old level-based pool so mid-game saves don't shrink.
+  if (!data.saveVersion || data.saveVersion < 3) {
+    const legacyPool = Math.min(ANIMALS.length, 15 + Math.max(0, (merged.level || 1) - 1) * 3);
+    merged.unlockFloor = Math.max(UNLOCK_START_COUNT, legacyPool, merged.unlockFloor || 0);
+  }
+
+  merged.saveVersion = 3;
+  if (merged.unlockFloor == null) merged.unlockFloor = UNLOCK_START_COUNT;
+  return merged;
+}
+
 function loadSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return createDefaultSave();
-    const data = JSON.parse(raw);
-    const merged = { ...createDefaultSave(), ...data };
-    if (data.saveVersion !== 2) {
-      merged.saveVersion = 2;
-      merged.encounterInitialized = false;
-      merged.currentAnimalIndex = ANIMALS.length - 1;
-    }
-    return merged;
+    return migrateSave(JSON.parse(raw));
   } catch {
     return createDefaultSave();
   }
@@ -69,8 +82,7 @@ function exportSave(save) {
 
 function importSave(json) {
   const data = JSON.parse(json);
-  const merged = { ...createDefaultSave(), ...data };
-  merged.saveVersion = 2;
+  const merged = migrateSave(data);
   merged.encounterInitialized = false;
   writeSave(merged);
   return merged;

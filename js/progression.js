@@ -22,12 +22,65 @@ function isAnimalPacified(save, animalIndex) {
   return getKillCount(save, animalIndex) >= KILLS_PER_ANIMAL;
 }
 
+/**
+ * Unlock in small batches: start with 3, then +3 only after every
+ * currently unlocked animal is fully pacified. Level no longer opens packs.
+ */
 function getUnlockedAnimalCount(save) {
-  return Math.min(ANIMALS.length, 15 + Math.max(0, save.level - 1) * 3);
+  const total = ANIMALS.length;
+  let count = Math.min(total, UNLOCK_START_COUNT);
+
+  while (count < total) {
+    const start = total - count;
+    let batchPacified = true;
+    for (let i = start; i < total; i++) {
+      if (getKillCount(save, i) < KILLS_PER_ANIMAL) {
+        batchPacified = false;
+        break;
+      }
+    }
+    if (!batchPacified) break;
+    count = Math.min(total, count + UNLOCK_BATCH_SIZE);
+  }
+
+  // Never lock animals a save has already fought, or an older unlock floor.
+  let fromProgress = Math.max(UNLOCK_START_COUNT, save.unlockFloor || 0);
+  for (let i = 0; i < total; i++) {
+    if (getKillCount(save, i) > 0) {
+      fromProgress = Math.max(fromProgress, total - i);
+    }
+  }
+  if (save.currentAnimalIndex != null && save.currentAnimalIndex >= 0) {
+    fromProgress = Math.max(fromProgress, total - save.currentAnimalIndex);
+  }
+
+  const unlocked = Math.min(total, Math.max(count, fromProgress));
+  if ((save.unlockFloor || 0) < unlocked) save.unlockFloor = unlocked;
+  return unlocked;
 }
 
 function getUnlockedAnimalStartIndex(save) {
   return ANIMALS.length - getUnlockedAnimalCount(save);
+}
+
+/** How many animals still need pacifying before the next batch unlocks. */
+function getBatchUnlockProgress(save) {
+  const total = ANIMALS.length;
+  const count = getUnlockedAnimalCount(save);
+  if (count >= total) {
+    return { remaining: 0, unlocked: count, nextUnlock: 0, done: true };
+  }
+  const start = total - count;
+  let remaining = 0;
+  for (let i = start; i < total; i++) {
+    if (getKillCount(save, i) < KILLS_PER_ANIMAL) remaining += 1;
+  }
+  return {
+    remaining,
+    unlocked: count,
+    nextUnlock: Math.min(UNLOCK_BATCH_SIZE, total - count),
+    done: false,
+  };
 }
 
 function selectNextEncounter(save, excludeIndex = -1, random = Math.random) {
@@ -40,7 +93,13 @@ function selectNextEncounter(save, excludeIndex = -1, random = Math.random) {
     const rarity = getAnimalRarity(index);
     let weight = RARITY_CONFIG[rarity].weight;
     const kills = getKillCount(save, index);
-    if (kills >= KILLS_PER_ANIMAL) weight *= 0.15;
+    if (kills >= KILLS_PER_ANIMAL) {
+      weight *= 0.08; // push hard toward unfinished animals in the tiny pool
+    } else {
+      // Prefer the least-progressed of the current batch (the real grind).
+      const progress = kills / KILLS_PER_ANIMAL;
+      weight *= 1.35 - progress;
+    }
     totalWeight += weight;
     candidates.push({ index, weight });
   }

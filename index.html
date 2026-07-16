@@ -52,103 +52,79 @@
 
   <!-- Main Game -->
   <div id="game" class="game hidden">
+    <div class="game-scroll">
     <header class="header">
       <div class="header-top">
-        <div>
+        <div class="header-identity">
           <span id="header-name">🧑 Player</span>
           <span id="header-level" class="badge">Lv. 1</span>
+          <span id="header-title" class="header-title">Novice Pacifist</span>
         </div>
         <div class="header-right">
           <span id="header-gold">🪙 0</span>
           <button id="btn-lang-header" class="lang-chip" type="button" title="Language">🇬🇧</button>
         </div>
       </div>
-      <p id="header-title" class="header-title">Novice Pacifist</p>
-      <div class="xp-bar-wrap">
-        <div id="player-xp-bar" class="xp-bar"></div>
+      <div class="header-xp">
+        <div class="xp-bar-wrap">
+          <div id="player-xp-bar" class="xp-bar"></div>
+        </div>
+        <span id="player-xp-text" class="xp-text">0 / 100 XP</span>
       </div>
-      <p id="player-xp-text" class="xp-text">0 / 100 XP</p>
     </header>
 
     <!-- Fight Screen -->
     <main id="screen-fight" class="screen screen-fight">
       <div class="player-hp-section">
-        <span data-i18n="yourHp">Your HP</span>
+        <span class="hp-label" data-i18n="yourHp">Your HP</span>
         <div class="hp-bar-wrap">
           <div id="player-hp-bar" class="hp-bar player-hp"></div>
         </div>
-        <span id="player-hp-text">100 / 100</span>
+        <span id="player-hp-text" class="hp-value">100 / 100</span>
         <span id="shield-indicator" class="shield hidden" data-i18n="shieldActive">🛡️ Shield Active</span>
       </div>
 
       <div class="arena">
-        <p id="enemy-tier" class="tier-label">The Final Peace</p>
-        <p><span id="enemy-rarity" class="rarity rarity-common">Common</span></p>
-        <p id="quirk-badge" class="quirk-badge hidden"></p>
-        <div id="enemy-emoji" class="enemy-emoji">🐜</div>
-        <h2 id="enemy-name">Ant</h2>
-        <div class="hp-bar-wrap enemy">
-          <div id="enemy-hp-bar" class="hp-bar enemy-hp"></div>
+        <div class="arena-main">
+          <div id="enemy-emoji" class="enemy-emoji" aria-hidden="true">🐜</div>
+          <div class="arena-info">
+            <div class="arena-meta">
+              <span id="enemy-tier" class="tier-label">The Final Peace</span>
+              <span id="enemy-rarity" class="rarity rarity-common">Common</span>
+              <span id="quirk-badge" class="quirk-badge hidden"></span>
+            </div>
+            <h2 id="enemy-name">Ant</h2>
+            <div class="arena-hp">
+              <div class="hp-bar-wrap enemy">
+                <div id="enemy-hp-bar" class="hp-bar enemy-hp"></div>
+              </div>
+              <span id="enemy-hp-text" class="hp-value">500 / 500</span>
+            </div>
+            <div class="kill-progress">
+              <div class="kill-bar-wrap">
+                <div id="kill-bar" class="kill-bar"></div>
+              </div>
+              <span class="kill-label"><span data-i18n="pacified">Pacified</span>: <span id="kill-count">0 / 100</span></span>
+            </div>
+          </div>
         </div>
-        <p id="enemy-hp-text">500 / 500</p>
         <div id="fun-hud" class="fun-hud">
           <span id="combo-hud" class="fun-chip hidden">Combo x0</span>
           <span id="streak-hud" class="fun-chip heat hidden"></span>
           <span id="rage-hud" class="fun-chip rage hidden">🔥 LAST STAND</span>
         </div>
-        <div class="kill-progress">
-          <div class="kill-bar-wrap">
-            <div id="kill-bar" class="kill-bar"></div>
-          </div>
-          <p><span data-i18n="pacified">Pacified</span>: <span id="kill-count">0 / 100</span></p>
+      </div>
+
+      <div class="fight-footer">
+        <p id="encounter-status" class="encounter-status" data-i18n="whatWillYouDo">What will you do?</p>
+        <div id="abilities" class="abilities"></div>
+        <div class="fight-stats">
+          <span>ATK <strong id="fight-atk">10</strong></span>
+          <span>DEF <strong id="fight-def">5</strong></span>
+          <span>SPD <strong id="fight-spd">2</strong></span>
         </div>
       </div>
-
-      <p id="encounter-status" class="encounter-status" data-i18n="whatWillYouDo">What will you do?</p>
-
-      <div id="abilities" class="abilities"></div>
-
-      <div class="fight-stats">
-        <span>ATK <strong id="fight-atk">10</strong></span>
-        <span>DEF <strong id="fight-def">5</strong></span>
-        <span>SPD <strong id="fight-spd">2</strong></span>
-      </div>
     </main>
-
-    <!-- Pokemon-style command panel -->
-    <div id="command-panel" class="command-panel hidden">
-      <p class="command-prompt"><span id="command-prompt-text">A wild animal appears!</span></p>
-      <div class="command-grid">
-        <button id="btn-engage" class="cmd-btn cmd-fight" type="button">
-          <span class="cmd-icon">⚔️</span>
-          <span class="cmd-label" data-i18n="fight">FIGHT</span>
-        </button>
-        <button id="btn-strike" class="cmd-btn cmd-strike hidden" type="button">
-          <span class="cmd-icon">💥</span>
-          <span class="cmd-label" data-i18n="strike">STRIKE</span>
-        </button>
-        <button id="btn-run" class="cmd-btn cmd-run" type="button">
-          <span class="cmd-icon">💨</span>
-          <span class="cmd-label" data-i18n="run">RUN</span>
-        </button>
-        <button id="btn-power" class="cmd-btn cmd-power battle-only hidden" type="button">
-          <span class="cmd-icon">💢</span>
-          <span class="cmd-label" data-i18n="power">POWER</span>
-        </button>
-        <button id="btn-guard" class="cmd-btn cmd-guard battle-only hidden" type="button">
-          <span class="cmd-icon">🛡️</span>
-          <span class="cmd-label" data-i18n="guard">GUARD</span>
-        </button>
-        <button id="btn-taunt" class="cmd-btn cmd-taunt battle-only hidden" type="button">
-          <span class="cmd-icon">😤</span>
-          <span class="cmd-label" data-i18n="tauntBtn">TAUNT</span>
-        </button>
-        <button id="btn-peace" class="cmd-btn cmd-peace battle-only hidden" type="button">
-          <span class="cmd-icon">🕊️</span>
-          <span class="cmd-label" data-i18n="peaceBtn">PEACE</span>
-        </button>
-      </div>
-    </div>
 
     <!-- Stats Screen -->
     <main id="screen-stats" class="screen hidden">
@@ -221,6 +197,42 @@
       <h2 data-i18n="zooMap">🗺️ Zoo Map</h2>
       <div id="map-grid" class="map-grid"></div>
     </main>
+    </div><!-- /.game-scroll -->
+
+    <!-- Pokemon-style command panel -->
+    <div id="command-panel" class="command-panel hidden">
+      <p class="command-prompt"><span id="command-prompt-text">A wild animal appears!</span></p>
+      <div class="command-grid">
+        <button id="btn-engage" class="cmd-btn cmd-fight" type="button">
+          <span class="cmd-icon">⚔️</span>
+          <span class="cmd-label" data-i18n="fight">FIGHT</span>
+        </button>
+        <button id="btn-strike" class="cmd-btn cmd-strike hidden" type="button">
+          <span class="cmd-icon">💥</span>
+          <span class="cmd-label" data-i18n="strike">STRIKE</span>
+        </button>
+        <button id="btn-run" class="cmd-btn cmd-run" type="button">
+          <span class="cmd-icon">💨</span>
+          <span class="cmd-label" data-i18n="run">RUN</span>
+        </button>
+        <button id="btn-power" class="cmd-btn cmd-power battle-only hidden" type="button">
+          <span class="cmd-icon">💢</span>
+          <span class="cmd-label" data-i18n="power">POWER</span>
+        </button>
+        <button id="btn-guard" class="cmd-btn cmd-guard battle-only hidden" type="button">
+          <span class="cmd-icon">🛡️</span>
+          <span class="cmd-label" data-i18n="guard">GUARD</span>
+        </button>
+        <button id="btn-taunt" class="cmd-btn cmd-taunt battle-only hidden" type="button">
+          <span class="cmd-icon">😤</span>
+          <span class="cmd-label" data-i18n="tauntBtn">TAUNT</span>
+        </button>
+        <button id="btn-peace" class="cmd-btn cmd-peace battle-only hidden" type="button">
+          <span class="cmd-icon">🕊️</span>
+          <span class="cmd-label" data-i18n="peaceBtn">PEACE</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav">

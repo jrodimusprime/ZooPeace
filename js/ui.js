@@ -425,8 +425,8 @@ const UI = (() => {
     let gold = getGoldReward(idx);
 
     if (killNum === KILLS_PER_ANIMAL) {
-      xp *= 5;
-      gold *= 5;
+      xp *= 3;
+      gold *= 3;
     }
 
     // Streak heat
@@ -481,7 +481,12 @@ const UI = (() => {
         unlockEl.textContent = t('unlockedEncounters', { n: unlockedAfter - unlockedBefore });
         unlockEl.classList.remove('hidden');
       } else if (killNum === KILLS_PER_ANIMAL) {
-        unlockEl.textContent = t('fullyPacified', { emoji: ANIMALS[idx].emoji, name: display });
+        const batch = getBatchUnlockProgress(save);
+        let msg = t('fullyPacified', { emoji: ANIMALS[idx].emoji, name: display });
+        if (!batch.done && batch.remaining > 0) {
+          msg += ` ${t('batchUnlockHint', { n: batch.remaining })}`;
+        }
+        unlockEl.textContent = msg;
         unlockEl.classList.remove('hidden');
       } else {
         unlockEl.classList.add('hidden');
@@ -585,7 +590,12 @@ const UI = (() => {
     }
 
     const progress = getOverallProgress(save);
-    setText('#overall-progress', t('animalsPacified', { n: progress.pacified, total: progress.total }));
+    const batch = getBatchUnlockProgress(save);
+    let progressLine = t('animalsPacified', { n: progress.pacified, total: progress.total });
+    if (!batch.done) {
+      progressLine += ` · ${t('batchUnlockHint', { n: batch.remaining })}`;
+    }
+    setText('#overall-progress', progressLine);
     setText('#overall-kills', t('totalKillsProgress', { n: progress.kills, total: progress.target }));
     renderLangPickers();
     renderChallenges();

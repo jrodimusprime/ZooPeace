@@ -46,40 +46,42 @@ const GameplaySim = {
 
     const save = createDefaultSave();
 
-    // Encounter pool at level 1
+    // Starter batch is only 3 animals
     const level1Samples = [];
     for (let i = 0; i < 200; i++) {
       level1Samples.push(selectNextEncounter(save));
     }
-    const level1Max = Math.max(...level1Samples);
     const level1Min = Math.min(...level1Samples);
-    this.assert(level1Min >= 95, 'level 1 samples stay in smallest-animal band');
-    this.assert(!level1Samples.includes(0), 'level 1 never rolls whale');
+    this.assert(level1Min >= 107, 'starter samples stay in the first batch of 3');
+    this.assert(!level1Samples.includes(0), 'starter never rolls whale');
+    this.assert(getUnlockedAnimalCount(save) === 3, 'new save has 3 unlocked');
 
-    // Pool expansion
-    save.level = 10;
-    const pool10 = getUnlockedAnimalCount(save);
+    // Pool expands by pacifying the current batch, not by level
     save.level = 20;
-    const pool20 = getUnlockedAnimalCount(save);
-    this.assert(pool20 > pool10, 'encounter pool grows with level');
+    this.assert(getUnlockedAnimalCount(save) === 3, 'level alone does not expand the pool');
+    save.killCounts['107'] = KILLS_PER_ANIMAL;
+    save.killCounts['108'] = KILLS_PER_ANIMAL;
+    save.killCounts['109'] = KILLS_PER_ANIMAL;
+    this.assert(getUnlockedAnimalCount(save) === 6, 'pacifying a batch unlocks 3 more');
 
-    // Rarity weighting — commons should dominate at same level
-    save.level = 15;
+    // Rarity weighting in a mid-size unlocked pool
+    for (let i = 100; i < 110; i++) save.killCounts[String(i)] = KILLS_PER_ANIMAL;
+    this.assert(getUnlockedAnimalCount(save) >= 12, 'more batches unlock after more pacifies');
     const rarityCounts = { common: 0, uncommon: 0, rare: 0, legendary: 0 };
     for (let i = 0; i < 500; i++) {
       const idx = selectNextEncounter(save);
       rarityCounts[getAnimalRarity(idx)] += 1;
     }
-    this.assert(rarityCounts.common > rarityCounts.legendary, 'commons outnumber legendaries');
-    this.assert(rarityCounts.legendary > 0, 'legendaries can still spawn at mid level');
+    this.assert(rarityCounts.common + rarityCounts.uncommon > rarityCounts.legendary, 'commons/uncommons dominate');
 
-    // Pacified animals appear less
-    save.killCounts['109'] = 100;
+    // Pacified animals appear less within the pool
+    const unlockedStart = getUnlockedAnimalStartIndex(save);
+    save.killCounts[String(unlockedStart)] = KILLS_PER_ANIMAL;
     let pacifiedHits = 0;
-    for (let i = 0; i < 100; i++) {
-      if (selectNextEncounter(save) === 109) pacifiedHits++;
+    for (let i = 0; i < 120; i++) {
+      if (selectNextEncounter(save) === unlockedStart) pacifiedHits++;
     }
-    this.assert(pacifiedHits < 30, 'pacified animals appear less often');
+    this.assert(pacifiedHits < 40, 'pacified animals appear less often');
 
     // Flee rate during combat (~70%)
     let fleeSuccess = 0;

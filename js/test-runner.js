@@ -15,19 +15,27 @@ const TestRunner = {
     console.log('=== Zoo Peace Maker Logic Tests ===');
 
     this.assert(ANIMALS.length === 110, '110 animals defined');
-    this.assert(KILLS_PER_ANIMAL === 100, '100 kills per animal');
+    this.assert(KILLS_PER_ANIMAL === 200, '200 kills per animal');
+    this.assert(UNLOCK_START_COUNT === 3 && UNLOCK_BATCH_SIZE === 3, 'unlocks in batches of 3');
 
     const save = createDefaultSave();
     this.assert(save.currentAnimalIndex === ANIMALS.length - 1, 'starts among smallest animals');
     this.assert(!isAnimalUnlocked(save, 0), 'whale is locked for a new player');
     this.assert(isAnimalUnlocked(save, 109), 'small animals are unlocked first');
-    this.assert(getUnlockedAnimalCount(save) === 15, 'level 1 has 15 possible encounters');
+    this.assert(getUnlockedAnimalCount(save) === 3, 'new game starts with 3 encounters');
 
     const firstEncounter = selectNextEncounter(save, -1, () => 0.5);
-    this.assert(firstEncounter >= 95, 'level 1 encounter stays in small-animal pool');
+    this.assert(firstEncounter >= 107, 'starter encounter stays in the first batch of 3');
+
+    // Pacify the starter batch → unlock next 3
+    save.killCounts['107'] = KILLS_PER_ANIMAL;
+    save.killCounts['108'] = KILLS_PER_ANIMAL;
+    save.killCounts['109'] = KILLS_PER_ANIMAL;
+    this.assert(getUnlockedAnimalCount(save) === 6, 'pacifying the first 3 unlocks 3 more');
+    this.assert(!isAnimalUnlocked(save, 0), 'whale still locked after one batch');
 
     save.level = 33;
-    this.assert(isAnimalUnlocked(save, 0), 'XP level eventually unlocks whale encounters');
+    this.assert(!isAnimalUnlocked(save, 0), 'level alone no longer unlocks the whale');
 
     const whale = getAnimalStats(0);
     this.assert(whale.hp > 0 && whale.atk > 0, 'animal stats computed');
@@ -52,7 +60,7 @@ const TestRunner = {
     this.assert(save.unlockedAbilities.includes('calmStrike'), 'Calm Strike unlocks at level 5');
 
     const progress = getOverallProgress(save);
-    this.assert(progress.target === 11000, 'total target is 11000 kills');
+    this.assert(progress.target === 22000, 'total target is 22000 kills');
 
     const passed = this.results.filter((r) => r.pass).length;
     const total = this.results.length;

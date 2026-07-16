@@ -8,7 +8,8 @@ const STAT_CONFIG = {
 };
 
 function xpForLevel(level) {
-  return Math.floor(100 * Math.pow(1.15, level - 1));
+  // Steeper curve so levels (and free points) stay meaningful across a long grind.
+  return Math.floor(120 * Math.pow(1.2, level - 1));
 }
 
 function getUpgradeCost(statKey, currentLevel) {
@@ -92,7 +93,7 @@ function tickPassiveXp(save) {
   if (elapsed < 60000) return 0;
   const minutes = Math.floor(elapsed / 60000);
   save.lastPassiveTick = now;
-  const passive = minutes * save.level * 2;
+  const passive = Math.floor(minutes * save.level * 0.75);
   if (passive > 0) addXp(save, passive);
   return passive;
 }

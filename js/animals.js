@@ -124,7 +124,12 @@ const ANIMALS = [
   { emoji: '🦠', name: 'Microbe', tier: 9, baseHp: 20, baseAtk: 2, baseDef: 0, baseSpd: 10 },
 ];
 
-const KILLS_PER_ANIMAL = 100;
+/** Pacify target per animal. 110 × 200 ≈ 22k fights (~150–250h at idle pace). */
+const KILLS_PER_ANIMAL = 200;
+
+/** How many animals you start with / unlock each time a batch is fully pacified. */
+const UNLOCK_START_COUNT = 3;
+const UNLOCK_BATCH_SIZE = 3;
 
 const TIER_NAMES = {
   1: 'The Savannah Gates',
@@ -181,11 +186,12 @@ function getAnimalRarity(animalIndex) {
 function getXpReward(animalIndex, killCount) {
   const difficulty = ANIMALS.length - animalIndex;
   const rarity = RARITY_CONFIG[getAnimalRarity(animalIndex)];
-  return Math.floor((8 + difficulty * 1.5 + killCount * 0.1) * rarity.xpMultiplier);
+  // Slower XP so upgrades lag behind the long pacify grind.
+  return Math.floor((4 + difficulty * 0.85 + killCount * 0.04) * rarity.xpMultiplier);
 }
 
 function getGoldReward(animalIndex) {
   const difficulty = ANIMALS.length - animalIndex;
   const rarity = RARITY_CONFIG[getAnimalRarity(animalIndex)];
-  return Math.floor((4 + difficulty * 0.35) * rarity.goldMultiplier);
+  return Math.floor((3 + difficulty * 0.28) * rarity.goldMultiplier);
 }
