@@ -81,6 +81,11 @@ const ButtonSmoke = {
     this.assert(getAnimalTaunts(0).length === 10, 'whale has 10 taunts');
     const t1 = getRandomTaunt(109);
     this.assert(typeof t1 === 'string' && t1.length > 5, 'random taunt returns text');
+    const whaleJoin = getAnimalTaunts(0).join(' ');
+    const antJoin = getAnimalTaunts(109).join(' ');
+    this.assert(whaleJoin !== antJoin, 'whale and ant use different taunt sets');
+    this.assert(/whale|ocean|tide|blowhole|deep/i.test(whaleJoin), 'whale taunts mention whale flavor');
+    this.assert(/ant|colony|mandible|hill|formic/i.test(antJoin), 'ant taunts mention ant flavor');
 
     setLanguage('zh');
     this.assert(animalName('Ant') === '蚂蚁', 'Chinese animal name for Ant');
