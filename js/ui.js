@@ -87,6 +87,7 @@ const UI = (() => {
       Combat.flee();
     });
     onPress($('#btn-continue'), hideVictoryModal);
+    onPress($('#btn-levelup-ok'), hideLevelUpModal);
     onPress($('#btn-defeat-ok'), hideDefeatModal);
     onPress($('#btn-lang-header'), () => $('#lang-modal')?.classList.remove('hidden'));
     onPress($('#btn-lang-close'), () => $('#lang-modal')?.classList.add('hidden'));
@@ -138,13 +139,81 @@ const UI = (() => {
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && save) {
-        const passive = tickPassiveXp(save);
-        if (passive > 0) {
+        const xpResult = tickPassiveXp(save);
+        if (xpResult?.xpGain) {
           writeSave(save);
           renderFightHeader();
+          if (xpResult.levelsGained > 0) presentLevelUp(xpResult);
         }
       }
     });
+  }
+
+  function mergeXpResults(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    return {
+      xpGain: (a.xpGain || 0) + (b.xpGain || 0),
+      levelsGained: (a.levelsGained || 0) + (b.levelsGained || 0),
+      levelBefore: a.levelBefore,
+      levelAfter: b.levelAfter,
+      freePointsGained: (a.freePointsGained || 0) + (b.freePointsGained || 0),
+      newAbilities: [...(a.newAbilities || []), ...(b.newAbilities || [])],
+    };
+  }
+
+  function presentLevelUp(result) {
+    if (!result || !result.levelsGained) return;
+
+    applyStaticI18n();
+    const levelsEl = $('#levelup-levels');
+    const multiEl = $('#levelup-multi');
+    const pointsEl = $('#levelup-points');
+    const abilityEl = $('#levelup-ability');
+
+    if (levelsEl) levelsEl.textContent = `Lv. ${result.levelAfter}`;
+    if (multiEl) {
+      if (result.levelsGained > 1) {
+        multiEl.textContent = t('levelUpMulti', { n: result.levelsGained });
+        multiEl.classList.remove('hidden');
+      } else {
+        multiEl.classList.add('hidden');
+      }
+    }
+    if (pointsEl) {
+      const n = result.freePointsGained || result.levelsGained;
+      pointsEl.textContent = n === 1
+        ? t('levelUpPoints', { n })
+        : t('levelUpPointsPlural', { n });
+    }
+    if (abilityEl) {
+      if (result.newAbilities?.length) {
+        const names = result.newAbilities.map((id) => {
+          const key = (typeof ABILITY_I18N_KEYS !== 'undefined' && ABILITY_I18N_KEYS[id]) || id;
+          return t(key);
+        });
+        abilityEl.textContent = t('levelUpAbility', { name: names.join(', ') });
+        abilityEl.classList.remove('hidden');
+      } else {
+        abilityEl.classList.add('hidden');
+      }
+    }
+
+    const badge = $('#header-level');
+    if (badge) {
+      badge.classList.remove('level-ping');
+      // restart animation
+      void badge.offsetWidth;
+      badge.classList.add('level-ping');
+    }
+
+    $('#levelup-modal')?.classList.remove('hidden');
+  }
+
+  function hideLevelUpModal() {
+    $('#levelup-modal')?.classList.add('hidden');
+    const badge = $('#header-level');
+    if (badge) badge.classList.remove('level-ping');
   }
 
   function setCommandPrompt(text) {
@@ -222,7 +291,7 @@ const UI = (() => {
   }
 
   function startGame() {
-    tickPassiveXp(save);
+    const passiveResult = tickPassiveXp(save);
     ensureChallenges(save);
     if (!save.encounterInitialized || save.currentAnimalIndex == null || !ANIMALS[save.currentAnimalIndex]) {
       save.currentAnimalIndex = selectNextEncounter(save);
@@ -236,6 +305,10 @@ const UI = (() => {
     renderAll();
     switchTab('fight');
     setCommandPrompt(t('wildAppears', { name: animalName(ANIMALS[save.currentAnimalIndex].name) }));
+    if (passiveResult?.levelsGained > 0) {
+      writeSave(save);
+      presentLevelUp(passiveResult);
+    }
   }
 
   function renderAll() {
@@ -443,7 +516,7 @@ const UI = (() => {
       xp += fightStats.crits * 3;
     }
 
-    addXp(save, xp);
+    let xpResult = addXp(save, xp);
     save.gold += gold;
 
     bumpChallenge(save, 'daily_wins');
@@ -452,7 +525,7 @@ const UI = (() => {
 
     const claimed = claimReadyChallenges(save);
     if (claimed.xp || claimed.gold) {
-      addXp(save, claimed.xp);
+      xpResult = mergeXpResults(xpResult, addXp(save, claimed.xp));
       save.gold += claimed.gold;
     }
 
@@ -470,6 +543,9 @@ const UI = (() => {
     }
     if (claimed.claimed?.length) {
       xpLine += ` · ${t('challengeClaimed', { xp: claimed.xp, gold: claimed.gold })}`;
+    }
+    if (xpResult.levelsGained) {
+      xpLine += ` · ${t('levelUp')} Lv.${xpResult.levelAfter}`;
     }
     setText('#victory-xp', xpLine);
     setText('#victory-gold', goldLine);
@@ -499,6 +575,11 @@ const UI = (() => {
 
     renderFightHeader();
     $('#victory-modal')?.classList.remove('hidden');
+
+    // Level-up celebration sits on top of victory — make it a big deal.
+    if (xpResult.levelsGained > 0) {
+      presentLevelUp(xpResult);
+    }
   }
 
   function hideVictoryModal() {

@@ -33,15 +33,28 @@ function getPlayerCombatStats(save) {
 function addXp(save, amount) {
   const resolveBonus = 1 + STAT_CONFIG.resolve.effect(save.statLevels.resolve) / 100;
   const xpGain = Math.floor(amount * resolveBonus);
+  const levelBefore = save.level;
+  const abilitiesBefore = save.unlockedAbilities.slice();
   save.xp += xpGain;
 
+  let levelsGained = 0;
   while (save.xp >= xpForLevel(save.level)) {
     save.xp -= xpForLevel(save.level);
     save.level += 1;
     save.freeStatPoints += 1;
+    levelsGained += 1;
     checkAbilityUnlocks(save);
   }
-  return xpGain;
+
+  const newAbilities = save.unlockedAbilities.filter((id) => !abilitiesBefore.includes(id));
+  return {
+    xpGain,
+    levelsGained,
+    levelBefore,
+    levelAfter: save.level,
+    freePointsGained: levelsGained,
+    newAbilities,
+  };
 }
 
 function checkAbilityUnlocks(save) {
@@ -56,6 +69,12 @@ function checkAbilityUnlocks(save) {
     }
   }
 }
+
+const ABILITY_I18N_KEYS = {
+  calmStrike: 'calmStrike',
+  shieldBreath: 'shield',
+  peaceTreaty: 'treaty',
+};
 
 function upgradeStat(save, statKey) {
   const cost = getUpgradeCost(statKey, save.statLevels[statKey]);
@@ -90,10 +109,10 @@ function getPlayerTitle(save) {
 function tickPassiveXp(save) {
   const now = Date.now();
   const elapsed = now - (save.lastPassiveTick || now);
-  if (elapsed < 60000) return 0;
+  if (elapsed < 60000) return null;
   const minutes = Math.floor(elapsed / 60000);
   save.lastPassiveTick = now;
   const passive = Math.floor(minutes * save.level * 0.75);
-  if (passive > 0) addXp(save, passive);
-  return passive;
+  if (passive > 0) return addXp(save, passive);
+  return null;
 }
