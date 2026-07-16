@@ -29,7 +29,12 @@ const Combat = (() => {
   let lastFlash = '';
 
   const TICK_MS = 200;
-  const CRIT_CHANCE = 0.15;
+  const CRIT_CHANCE = 0.12;
+  /** Higher = slower auto-attacks. Stretches fights so buttons matter. */
+  const PLAYER_ATTACK_PACE = 2.05;
+  const STRIKE_COOLDOWN = 1.45;
+  const STRIKE_MULT = 1.12;
+  const POWER_MULT = 2.0;
 
   function variance(value) {
     const v = value * (0.9 + Math.random() * 0.2);
@@ -135,7 +140,7 @@ const Combat = (() => {
     if (!state || !state.fighting || state.enemy.hp <= 0 || defeatHandled) return;
     if (tapBoostCooldown > 0) return;
     tapBoostActive = true;
-    tapBoostCooldown = 1;
+    tapBoostCooldown = STRIKE_COOLDOWN;
     doPlayerAttack(true);
     notify();
   }
@@ -290,7 +295,7 @@ const Combat = (() => {
 
     let enemySpd = Math.max(0.5, state.enemy.spd);
     if (tauntActive) enemySpd *= 1.15;
-    const playerInterval = 1 / Math.max(0.5, state.playerStats.speed);
+    const playerInterval = PLAYER_ATTACK_PACE / Math.max(0.5, state.playerStats.speed);
     const enemyInterval = 1 / enemySpd;
 
     state.playerAttackTimer += dt;
@@ -335,10 +340,10 @@ const Combat = (() => {
     }
 
     let atk = state.playerStats.attack;
-    if (boosted) atk *= 1.25;
-    if (opts.power) atk *= 2.5;
+    if (boosted) atk *= STRIKE_MULT;
+    if (opts.power) atk *= POWER_MULT;
     if (state.save.treatBonus > 0) atk *= 1.1;
-    if (inRage()) atk *= 1.35;
+    if (inRage()) atk *= 1.25;
 
     let critChance = CRIT_CHANCE + (tauntActive ? 0.1 : 0) + (inRage() ? 0.1 : 0);
     const isCrit = Math.random() < critChance;

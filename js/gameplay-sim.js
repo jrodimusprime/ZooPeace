@@ -11,12 +11,12 @@ const GameplaySim = {
     else console.log(`PASS: ${name}`);
   },
 
-  simulateCombat(playerStats, enemyStats, maxTicks = 500) {
+  simulateCombat(playerStats, enemyStats, maxTicks = 900) {
     let playerHp = playerStats.maxHp;
     let enemyHp = enemyStats.maxHp;
     let playerTimer = 0;
     let enemyTimer = 0;
-    const playerInterval = 1 / playerStats.speed;
+    const playerInterval = 2.05 / Math.max(0.5, playerStats.speed);
     const enemyInterval = 1 / enemyStats.spd;
 
     for (let tick = 0; tick < maxTicks; tick++) {
@@ -25,14 +25,14 @@ const GameplaySim = {
 
       if (playerTimer >= playerInterval) {
         playerTimer = 0;
-        const dmg = Math.max(1, Math.floor(playerStats.attack - enemyStats.def * 0.5));
+        const dmg = Math.max(1, Math.floor(playerStats.attack - enemyStats.def * 0.7));
         enemyHp -= dmg;
       }
       if (enemyHp <= 0) return 'win';
 
       if (enemyTimer >= enemyInterval) {
         enemyTimer = 0;
-        const dmg = Math.max(1, Math.floor(enemyStats.atk - playerStats.defence * 0.5));
+        const dmg = Math.max(1, Math.floor(enemyStats.atk - playerStats.defence * 0.7));
         playerHp -= dmg;
       }
       if (playerHp <= 0) return 'loss';
@@ -99,8 +99,8 @@ const GameplaySim = {
 
     // Soft-caps still bound early threat (looser than before, but finite)
     const scorpion = getAnimalStats(106, 1);
-    this.assert(scorpion.spd <= 3, 'scorpion speed soft-capped at level 1');
-    this.assert(scorpion.atk <= 11, 'scorpion attack soft-capped at level 1');
+    this.assert(scorpion.spd <= 2, 'scorpion speed soft-capped at level 1');
+    this.assert(scorpion.atk <= 10, 'scorpion attack soft-capped at level 1');
 
     // Combat: starter should lose to whale (huge HP)
     const whale = getAnimalStats(0, 1);

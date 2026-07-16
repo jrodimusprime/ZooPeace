@@ -2,7 +2,8 @@ const STAT_CONFIG = {
   attack: { label: 'Attack', baseCost: 10, effect: (lvl) => lvl * 2 + 8 },
   defence: { label: 'Defence', baseCost: 10, effect: (lvl) => lvl * 1 + 3 },
   vitality: { label: 'Vitality', baseCost: 12, effect: (lvl) => 80 + lvl * 10 },
-  speed: { label: 'Speed', baseCost: 15, effect: (lvl) => 1 + lvl * 0.5 },
+  // Slower attack rate growth so mid/late fights don't melt in a few seconds.
+  speed: { label: 'Speed', baseCost: 15, effect: (lvl) => 0.85 + lvl * 0.35 },
   aura: { label: 'Peace Aura', baseCost: 20, effect: (lvl) => lvl * 2 },
   resolve: { label: 'Resolve', baseCost: 18, effect: (lvl) => lvl * 3 },
 };
@@ -18,11 +19,11 @@ function getUpgradeCost(statKey, currentLevel) {
 }
 
 function getPlayerCombatStats(save) {
-  const s = save.stats;
   const sl = save.statLevels;
+  // Combat uses upgraded levels only (legacy flat save.stats bonuses ignored).
   return {
-    attack: STAT_CONFIG.attack.effect(sl.attack) + (s.attack || 0),
-    defence: STAT_CONFIG.defence.effect(sl.defence) + (s.defence || 0),
+    attack: STAT_CONFIG.attack.effect(sl.attack),
+    defence: STAT_CONFIG.defence.effect(sl.defence),
     maxHp: STAT_CONFIG.vitality.effect(sl.vitality),
     speed: STAT_CONFIG.speed.effect(sl.speed),
     aura: STAT_CONFIG.aura.effect(sl.aura),

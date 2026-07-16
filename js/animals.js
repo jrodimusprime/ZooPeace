@@ -161,17 +161,20 @@ function getAnimalStats(index, playerLevel = 1) {
   const tierMult = 1 + animal.tier * 0.12;
   const level = Math.max(1, playerLevel || 1);
 
-  // Softer soft-caps — early bugs can still punish underleveled players.
-  const maxSpd = Math.min(animal.baseSpd, 3 + Math.floor(level / 2));
-  const maxAtk = Math.floor(8 + level * 2.5);
-  const rawAtk = Math.floor(animal.baseAtk * tierMult * 1.1);
+  // Soft-caps keep early bugs fair; late animals still threaten.
+  const maxSpd = Math.min(animal.baseSpd, 2 + Math.floor(level / 3));
+  const maxAtk = Math.floor(7 + level * 2.2);
+  const rawAtk = Math.floor(animal.baseAtk * tierMult * 1.05);
+
+  // Extra HP so fights last ~8–15s early (with light tapping), longer later.
+  const hpMult = 2.15;
 
   return {
     ...animal,
-    hp: Math.floor(animal.baseHp * tierMult * 1.2),
-    maxHp: Math.floor(animal.baseHp * tierMult * 1.2),
+    hp: Math.floor(animal.baseHp * tierMult * hpMult),
+    maxHp: Math.floor(animal.baseHp * tierMult * hpMult),
     atk: Math.min(rawAtk, maxAtk),
-    def: Math.floor(animal.baseDef * tierMult * 1.15),
+    def: Math.floor(animal.baseDef * tierMult * 1.25),
     spd: Math.max(1, maxSpd),
   };
 }
