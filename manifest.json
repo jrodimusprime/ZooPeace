@@ -1,0 +1,10 @@
+{
+  "name": "Zoo Peace Maker",
+  "short_name": "ZooPeace",
+  "description": "Calm every zoo animal. One step closer to peace.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#2d6a4f",
+  "orientation": "portrait"
+}

@@ -1,0 +1,123 @@
+.player-hp-section {
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.hp-bar {
+  height: 100%;
+  transition: width 0.15s;
+}
+
+.player-hp { background: var(--hp-player); width: 100%; }
+.enemy-hp { background: var(--hp-enemy); width: 100%; }
+
+.hp-bar-wrap {
+  margin: 4px 0;
+  height: 14px;
+}
+
+.shield {
+  display: inline-block;
+  color: var(--xp);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.arena {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.tier-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.enemy-emoji {
+  font-size: 5rem;
+  line-height: 1.1;
+  margin: 8px 0;
+  transition: transform 0.1s;
+}
+
+.enemy-emoji.shake {
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px) rotate(-3deg); }
+  75% { transform: translateX(6px) rotate(3deg); }
+}
+
+#enemy-name {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+}
+
+.kill-progress {
+  margin-top: 16px;
+}
+
+.kill-bar {
+  height: 100%;
+  background: var(--primary-light);
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.kill-progress p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.combat-actions {
+  margin: 16px 0;
+}
+
+.abilities {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ability-btn {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.fight-stats {
+  display: flex;
+  justify-content: space-around;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.fight-stats strong {
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.victory .peace-message {
+  animation: glow 1.5s ease infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 8px rgba(233, 196, 106, 0.3); }
+  to { text-shadow: 0 0 20px rgba(233, 196, 106, 0.8); }
+}
