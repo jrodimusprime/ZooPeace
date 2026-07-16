@@ -1,5 +1,13 @@
 const SAVE_KEY = 'zoo_peace_save';
 
+function detectBrowserLang() {
+  const nav = (typeof navigator !== 'undefined' ? navigator.language || 'en' : 'en').toLowerCase();
+  if (nav.startsWith('zh')) return 'zh';
+  if (nav.startsWith('es')) return 'es';
+  if (nav.startsWith('hi')) return 'hi';
+  return 'en';
+}
+
 function createDefaultSave() {
   return {
     saveVersion: 2,
@@ -12,6 +20,7 @@ function createDefaultSave() {
     stats: { attack: 10, defence: 5, vitality: 100, speed: 2, aura: 0, resolve: 0 },
     statLevels: { attack: 1, defence: 1, vitality: 1, speed: 1, aura: 0, resolve: 0 },
     freeStatPoints: 0,
+    lang: detectBrowserLang(),
     currentAnimalIndex: ANIMALS.length - 1,
     encounterInitialized: false,
     killCounts: {},

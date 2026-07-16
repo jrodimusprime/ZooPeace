@@ -7,7 +7,9 @@ const UI = (() => {
 
   function init(gameSave) {
     save = gameSave;
+    setLanguage(save.lang || 'en');
     bindEvents();
+    renderLangPickers();
   }
 
   function onPress(el, handler) {
@@ -17,6 +19,46 @@ const UI = (() => {
       handler(event);
     };
     el.addEventListener('click', run);
+  }
+
+  function changeLanguage(lang) {
+    setLanguage(lang);
+    if (save) {
+      save.lang = lang;
+      writeSave(save);
+    }
+    renderLangPickers();
+    updateHeaderLangChip();
+    if (save?.onboarded) {
+      renderAll();
+      const animal = ANIMALS[save.currentAnimalIndex];
+      if (animal) setCommandPrompt(t('wildAppears', { name: animalName(animal.name) }));
+    }
+  }
+
+  function renderLangPickers() {
+    ['#lang-picker', '#lang-picker-stats', '#lang-picker-modal'].forEach((sel) => {
+      const box = $(sel);
+      if (!box) return;
+      box.innerHTML = '';
+      Object.entries(I18N.langs).forEach(([code, meta]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lang-btn' + (I18N.current === code ? ' active' : '');
+        btn.dataset.lang = code;
+        btn.innerHTML = `<span class="lang-flag">${meta.flag}</span><span class="lang-name">${meta.label}</span>`;
+        onPress(btn, () => {
+          changeLanguage(code);
+          $('#lang-modal')?.classList.add('hidden');
+        });
+        box.appendChild(btn);
+      });
+    });
+  }
+
+  function updateHeaderLangChip() {
+    const chip = $('#btn-lang-header');
+    if (chip) chip.textContent = I18N.langs[I18N.current]?.flag || '🌐';
   }
 
   function bindEvents() {
@@ -39,6 +81,8 @@ const UI = (() => {
     });
     onPress($('#btn-continue'), hideVictoryModal);
     onPress($('#btn-defeat-ok'), hideDefeatModal);
+    onPress($('#btn-lang-header'), () => $('#lang-modal')?.classList.remove('hidden'));
+    onPress($('#btn-lang-close'), () => $('#lang-modal')?.classList.add('hidden'));
 
     $$('.nav-tab').forEach((tab) => {
       onPress(tab, () => switchTab(tab.dataset.tab));
@@ -74,9 +118,12 @@ const UI = (() => {
     });
 
     onPress($('#btn-reset'), () => {
-      if (confirm('Reset all progress? This cannot be undone.')) {
+      if (confirm(t('resetConfirm'))) {
+        const lang = save?.lang || I18N.current;
         Combat.stopCombat();
         save = resetSave();
+        save.lang = lang;
+        writeSave(save);
         showOnboarding();
         $('#command-panel')?.classList.add('hidden');
       }
@@ -112,11 +159,12 @@ const UI = (() => {
   function onBegin() {
     const name = $('#player-name').value.trim();
     if (!name) {
-      $('#name-error').textContent = 'Please enter your name.';
+      $('#name-error').textContent = t('nameError');
       return;
     }
     save.playerName = name.slice(0, 16);
     save.avatar = document.querySelector('input[name="avatar"]:checked')?.value || '🧑';
+    save.lang = I18N.current;
     save.onboarded = true;
     writeSave(save);
     hideOnboarding();
@@ -127,6 +175,8 @@ const UI = (() => {
     $('#onboarding').classList.remove('hidden');
     $('#game').classList.add('hidden');
     $('#command-panel')?.classList.add('hidden');
+    applyStaticI18n();
+    renderLangPickers();
   }
 
   function hideOnboarding() {
@@ -170,11 +220,12 @@ const UI = (() => {
       writeSave(save);
     }
 
-    // Start combat BEFORE rendering so buttons always have an active battle state.
     ensureCombat();
+    applyStaticI18n();
+    updateHeaderLangChip();
     renderAll();
     switchTab('fight');
-    setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
+    setCommandPrompt(t('wildAppears', { name: animalName(ANIMALS[save.currentAnimalIndex].name) }));
   }
 
   function renderAll() {
@@ -196,6 +247,14 @@ const UI = (() => {
     $('#player-xp-text').textContent = `${save.xp} / ${needed} XP`;
   }
 
+  function rarityLabel(rarity) {
+    return t(rarity);
+  }
+
+  function tierLabel(tier) {
+    return t(`tier${tier}`);
+  }
+
   function renderFight() {
     const idx = save.currentAnimalIndex;
     const animal = ANIMALS[idx];
@@ -206,12 +265,12 @@ const UI = (() => {
     const rarity = getAnimalRarity(idx);
 
     setText('#enemy-emoji', animal.emoji);
-    setText('#enemy-name', animal.name);
-    setText('#enemy-tier', TIER_NAMES[animal.tier]);
+    setText('#enemy-name', animalName(animal.name));
+    setText('#enemy-tier', tierLabel(animal.tier));
 
     const rarityEl = $('#enemy-rarity');
     if (rarityEl) {
-      rarityEl.textContent = RARITY_CONFIG[rarity].label;
+      rarityEl.textContent = rarityLabel(rarity);
       rarityEl.className = `rarity rarity-${rarity}`;
     }
 
@@ -243,9 +302,9 @@ const UI = (() => {
     if (!container) return;
     container.innerHTML = '';
     const abilityMeta = {
-      calmStrike: { label: 'Calm Strike', emoji: '✨' },
-      shieldBreath: { label: 'Shield', emoji: '🛡️' },
-      peaceTreaty: { label: 'Treaty', emoji: '🕊️' },
+      calmStrike: { labelKey: 'calmStrike', emoji: '✨' },
+      shieldBreath: { labelKey: 'shield', emoji: '🛡️' },
+      peaceTreaty: { labelKey: 'treaty', emoji: '🕊️' },
     };
     for (const id of save.unlockedAbilities) {
       const meta = abilityMeta[id];
@@ -253,7 +312,7 @@ const UI = (() => {
       btn.type = 'button';
       btn.className = 'ability-btn';
       btn.dataset.ability = id;
-      btn.textContent = `${meta.emoji} ${meta.label}`;
+      btn.textContent = `${meta.emoji} ${t(meta.labelKey)}`;
       onPress(btn, () => Combat.useAbility(id));
       container.appendChild(btn);
     }
@@ -315,18 +374,19 @@ const UI = (() => {
     checkGameComplete(save);
     writeSave(save);
 
-    setText('#victory-message', 'One Step Closer to Peace');
+    const display = animalName(ANIMALS[idx].name);
+    setText('#victory-message', t('oneStepCloser'));
     setText('#victory-xp', `+${xpGain} XP`);
-    setText('#victory-gold', `+${goldGain + streakBonus} Gold`);
-    setText('#victory-kills', `${ANIMALS[idx].emoji} ${ANIMALS[idx].name}: ${killNum} / ${KILLS_PER_ANIMAL}`);
+    setText('#victory-gold', `+${goldGain + streakBonus} ${t('gold')}`);
+    setText('#victory-kills', `${ANIMALS[idx].emoji} ${display}: ${killNum} / ${KILLS_PER_ANIMAL}`);
 
     const unlockEl = $('#victory-unlock');
     if (unlockEl) {
       if (unlockedAfter > unlockedBefore) {
-        unlockEl.textContent = `${unlockedAfter - unlockedBefore} new animal encounters unlocked by your XP!`;
+        unlockEl.textContent = t('unlockedEncounters', { n: unlockedAfter - unlockedBefore });
         unlockEl.classList.remove('hidden');
       } else if (killNum === KILLS_PER_ANIMAL) {
-        unlockEl.textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name} fully pacified!`;
+        unlockEl.textContent = t('fullyPacified', { emoji: ANIMALS[idx].emoji, name: display });
         unlockEl.classList.remove('hidden');
       } else {
         unlockEl.classList.add('hidden');
@@ -334,7 +394,7 @@ const UI = (() => {
     }
 
     if (save.gameComplete) {
-      setText('#victory-message', 'Zoo Peace Achieved!');
+      setText('#victory-message', t('zooPeaceAchieved'));
     }
 
     $('#victory-modal')?.classList.remove('hidden');
@@ -345,23 +405,24 @@ const UI = (() => {
     $('#victory-modal')?.classList.add('hidden');
     if (save.gameComplete) {
       $('#finale-overlay')?.classList.remove('hidden');
+      applyStaticI18n();
     }
     const previous = save.currentAnimalIndex;
     save.currentAnimalIndex = selectNextEncounter(save, previous);
     writeSave(save);
     Combat.resetEnemy();
     renderFight();
-    setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
+    setCommandPrompt(t('wildAppears', { name: animalName(ANIMALS[save.currentAnimalIndex].name) }));
   }
 
   function handleFlee(success) {
     const status = $('#encounter-status');
     if (!success) {
       if (status) {
-        status.textContent = 'Could not escape! The animal gets a free attack.';
+        status.textContent = t('escapeFailed');
         status.className = 'encounter-status danger';
       }
-      setCommandPrompt('Escape failed! Keep fighting!');
+      setCommandPrompt(t('escapeFailedPrompt'));
       return;
     }
 
@@ -371,23 +432,24 @@ const UI = (() => {
     Combat.resetEnemy();
     renderFight();
     const animal = ANIMALS[save.currentAnimalIndex];
+    const display = animalName(animal.name);
     if (status) {
-      status.textContent = `Got away safely! Next up: ${animal.emoji} ${animal.name}.`;
+      status.textContent = t('gotAway', { emoji: animal.emoji, name: display });
       status.className = 'encounter-status';
     }
-    setCommandPrompt(`Got away safely! A wild ${animal.name} appears!`);
+    setCommandPrompt(t('gotAwayPrompt', { name: display }));
   }
 
   function handleDefeat() {
     $('#defeat-modal')?.classList.remove('hidden');
-    setCommandPrompt('You were knocked out…');
+    setCommandPrompt(t('knockedOutPrompt'));
   }
 
   function hideDefeatModal() {
     $('#defeat-modal')?.classList.add('hidden');
     setTimeout(() => {
       Combat.resetEnemy();
-      setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
+      setCommandPrompt(t('wildAppears', { name: animalName(ANIMALS[save.currentAnimalIndex].name) }));
     }, 500);
   }
 
@@ -415,8 +477,9 @@ const UI = (() => {
     }
 
     const progress = getOverallProgress(save);
-    setText('#overall-progress', `${progress.pacified} / ${progress.total} animals pacified`);
-    setText('#overall-kills', `${progress.kills} / ${progress.target} total defeats`);
+    setText('#overall-progress', t('animalsPacified', { n: progress.pacified, total: progress.total }));
+    setText('#overall-kills', t('totalKillsProgress', { n: progress.kills, total: progress.target }));
+    renderLangPickers();
   }
 
   function renderMap() {
@@ -431,7 +494,7 @@ const UI = (() => {
         currentTier = animal.tier;
         const header = document.createElement('div');
         header.className = 'map-tier-header';
-        header.textContent = TIER_NAMES[currentTier];
+        header.textContent = tierLabel(currentTier);
         grid.appendChild(header);
       }
 
@@ -448,7 +511,7 @@ const UI = (() => {
 
       cell.innerHTML = `
         <span class="map-emoji">${unlocked ? animal.emoji : '🔒'}</span>
-        <span class="map-name">${unlocked ? animal.name : '???'}</span>
+        <span class="map-name">${unlocked ? animalName(animal.name) : '???'}</span>
         <span class="map-kills">${unlocked ? `${kills}/${KILLS_PER_ANIMAL}` : ''}</span>
       `;
       grid.appendChild(cell);
@@ -457,6 +520,8 @@ const UI = (() => {
 
   function boot(gameSave) {
     save = gameSave;
+    setLanguage(save.lang || 'en');
+    updateHeaderLangChip();
     if (!save.onboarded) {
       showOnboarding();
     } else {
@@ -472,5 +537,6 @@ const UI = (() => {
     setSave: (s) => { save = s; },
     ensureCombat,
     startGame,
+    changeLanguage,
   };
 })();

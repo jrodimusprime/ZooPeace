@@ -80,11 +80,10 @@ function buyTreat(save) {
 }
 
 function getPlayerTitle(save) {
-  const idx = save.currentAnimalIndex;
-  if (save.gameComplete) return 'Zoo Peacekeeper Supreme';
-  if (idx === 0) return 'Novice Pacifist';
-  const animal = ANIMALS[Math.min(idx, ANIMALS.length - 1)];
-  return `${animal.name} Pacifier`;
+  if (save.gameComplete) return t('supremeTitle');
+  if (!save.totalKills) return t('noviceTitle');
+  const animal = ANIMALS[Math.min(save.currentAnimalIndex, ANIMALS.length - 1)];
+  return t('pacifierTitle', { name: animalName(animal.name) });
 }
 
 function tickPassiveXp(save) {

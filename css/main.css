@@ -140,10 +140,65 @@ body {
   border-bottom: 1px solid var(--card);
 }
 
-.header-top {
+.header-right {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+}
+
+.lang-chip {
+  border: 1px solid var(--card);
+  background: var(--card);
+  border-radius: 999px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.lang-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lang-picker-modal {
+  margin: 16px 0;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  min-height: 48px;
+  border: 2px solid var(--card);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lang-btn.active {
+  border-color: var(--accent);
+  background: var(--card);
+}
+
+.lang-flag {
+  font-size: 1.2rem;
+}
+
+.lang-section {
+  margin: 12px 0 16px;
+}
+
+.lang-section .label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
 }
 
 .badge {

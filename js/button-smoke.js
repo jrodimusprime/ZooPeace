@@ -70,15 +70,26 @@ const ButtonSmoke = {
     run.click();
     await this.sleep(200);
     const status = document.getElementById('encounter-status').textContent;
-    const fledOrFailed = UI.getSave().currentAnimalIndex !== midAnimal || status.includes('Could not escape');
+    const fledOrFailed =
+      UI.getSave().currentAnimalIndex !== midAnimal ||
+      /escape|escap|逃|भाग/i.test(status);
     this.assert(fledOrFailed, 'RUN during combat either escapes or fails with message');
 
-    // Taunts
+    // Taunts + i18n
     this.assert(typeof getRandomTaunt === 'function', 'taunt helper loaded');
     this.assert(getAnimalTaunts(109).length === 10, 'each animal has 10 taunts');
     this.assert(getAnimalTaunts(0).length === 10, 'whale has 10 taunts');
     const t1 = getRandomTaunt(109);
     this.assert(typeof t1 === 'string' && t1.length > 5, 'random taunt returns text');
+
+    setLanguage('zh');
+    this.assert(animalName('Ant') === '蚂蚁', 'Chinese animal name for Ant');
+    this.assert(t('fight') === '战斗', 'Chinese FIGHT label');
+    setLanguage('es');
+    this.assert(animalName('Whale') === 'Ballena', 'Spanish animal name for Whale');
+    setLanguage('hi');
+    this.assert(animalName('Lion') === 'शेर', 'Hindi animal name for Lion');
+    setLanguage('en');
 
     const passed = this.results.filter((r) => r.pass).length;
     const total = this.results.length;
