@@ -140,17 +140,24 @@ const TIER_NAMES = {
 
 const AVATARS = ['🧑', '🧔', '👩', '👨', '👴', '👵', '🧒'];
 
-function getAnimalStats(index) {
+function getAnimalStats(index, playerLevel = 1) {
   const animal = ANIMALS[index];
   if (!animal) return null;
   const tierMult = 1 + animal.tier * 0.15;
+  const level = Math.max(1, playerLevel || 1);
+
+  // Soft-cap threat so early players aren't melted by fast bugs like Scorpion.
+  const maxSpd = Math.min(animal.baseSpd, 2 + Math.floor(level / 3));
+  const maxAtk = 6 + level * 2;
+  const rawAtk = Math.floor(animal.baseAtk * tierMult);
+
   return {
     ...animal,
     hp: Math.floor(animal.baseHp * tierMult),
     maxHp: Math.floor(animal.baseHp * tierMult),
-    atk: Math.floor(animal.baseAtk * tierMult),
+    atk: Math.min(rawAtk, maxAtk),
     def: Math.floor(animal.baseDef * tierMult),
-    spd: animal.baseSpd,
+    spd: Math.max(1, maxSpd),
   };
 }
 

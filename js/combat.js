@@ -11,6 +11,8 @@ const Combat = (() => {
   let shieldActive = false;
   let shieldTimer = 0;
   let engaged = false;
+  let defeatHandled = false;
+  let victoryHandled = false;
 
   const TICK_MS = 200;
 
@@ -24,6 +26,10 @@ const Combat = (() => {
     return variance(Math.max(1, raw));
   }
 
+  function animalForSave(save) {
+    return getAnimalStats(save.currentAnimalIndex, save.level);
+  }
+
   function startCombat(save, callbacks) {
     onUpdate = callbacks.onUpdate;
     onVictory = callbacks.onVictory;
@@ -31,7 +37,7 @@ const Combat = (() => {
     onFlee = callbacks.onFlee;
 
     const playerStats = getPlayerCombatStats(save);
-    const animalData = getAnimalStats(save.currentAnimalIndex);
+    const animalData = animalForSave(save);
 
     state = {
       save,
@@ -50,6 +56,8 @@ const Combat = (() => {
     shieldActive = false;
     shieldTimer = 0;
     engaged = false;
+    defeatHandled = false;
+    victoryHandled = false;
 
     if (tickInterval) clearInterval(tickInterval);
     tickInterval = setInterval(tick, TICK_MS);
@@ -57,7 +65,8 @@ const Combat = (() => {
   }
 
   function engage() {
-    if (!state) return;
+    if (!state || defeatHandled || victoryHandled) return;
+    if (state.playerHp <= 0 || state.enemy.hp <= 0) return;
     engaged = true;
     state.fighting = true;
     notify();
@@ -70,10 +79,12 @@ const Combat = (() => {
     }
     state = null;
     engaged = false;
+    defeatHandled = false;
+    victoryHandled = false;
   }
 
   function tapStrike() {
-    if (!state || !state.fighting || state.enemy.hp <= 0) return;
+    if (!state || !state.fighting || state.enemy.hp <= 0 || defeatHandled) return;
     if (tapBoostCooldown > 0) return;
     tapBoostActive = true;
     tapBoostCooldown = 1;
@@ -82,13 +93,18 @@ const Combat = (() => {
   }
 
   function flee() {
-    if (!state || state.enemy.hp <= 0 || state.playerHp <= 0) return false;
+    if (!state || state.enemy.hp <= 0 || state.playerHp <= 0 || defeatHandled) return false;
     const success = !state.fighting || Math.random() < 0.7;
     if (success) {
       state.fighting = false;
       engaged = false;
     } else {
       doEnemyAttack();
+      // If the free hit KO'd the player, flee callback should not also run as a soft fail.
+      if (defeatHandled) {
+        notify();
+        return false;
+      }
     }
     if (onFlee) onFlee(success);
     notify();
@@ -96,7 +112,7 @@ const Combat = (() => {
   }
 
   function useAbility(abilityId) {
-    if (!state || !state.fighting) return false;
+    if (!state || !state.fighting || defeatHandled) return false;
     if (!state.save.unlockedAbilities.includes(abilityId)) return false;
     if (abilityCooldowns[abilityId] > 0) return false;
 
@@ -134,13 +150,12 @@ const Combat = (() => {
       if (shieldTimer <= 0) shieldActive = false;
     }
 
-    if (!state.fighting || state.enemy.hp <= 0 || state.playerHp <= 0) {
-      notify();
+    if (!state.fighting || state.enemy.hp <= 0 || state.playerHp <= 0 || defeatHandled || victoryHandled) {
       return;
     }
 
-    const playerInterval = 1 / state.playerStats.speed;
-    const enemyInterval = 1 / state.enemy.spd;
+    const playerInterval = 1 / Math.max(0.5, state.playerStats.speed);
+    const enemyInterval = 1 / Math.max(0.5, state.enemy.spd);
 
     state.playerAttackTimer += dt;
     state.enemyAttackTimer += dt;
@@ -149,6 +164,11 @@ const Combat = (() => {
       state.playerAttackTimer = 0;
       doPlayerAttack(tapBoostActive);
       tapBoostActive = false;
+    }
+
+    if (defeatHandled || victoryHandled) {
+      notify();
+      return;
     }
 
     if (state.enemyAttackTimer >= enemyInterval) {
@@ -160,7 +180,7 @@ const Combat = (() => {
   }
 
   function doPlayerAttack(boosted) {
-    if (!state || state.enemy.hp <= 0) return;
+    if (!state || state.enemy.hp <= 0 || defeatHandled) return;
     let atk = state.playerStats.attack;
     if (boosted) atk *= 1.25;
     if (state.save.treatBonus > 0) atk *= 1.1;
@@ -170,7 +190,7 @@ const Combat = (() => {
   }
 
   function doEnemyAttack() {
-    if (!state || state.playerHp <= 0) return;
+    if (!state || state.playerHp <= 0 || defeatHandled) return;
     if (shieldActive) return;
 
     const auraChance = state.playerStats.aura / 100;
@@ -180,14 +200,21 @@ const Combat = (() => {
     state.playerHp = Math.max(0, state.playerHp - dmg);
     if (state.playerHp <= 0) {
       state.fighting = false;
-      resetWinStreak(state.save);
-      if (onDefeat) onDefeat();
+      engaged = false;
+      if (!defeatHandled) {
+        defeatHandled = true;
+        resetWinStreak(state.save);
+        writeSave(state.save);
+        if (onDefeat) onDefeat();
+      }
     }
   }
 
   function checkVictory() {
-    if (!state || state.enemy.hp > 0) return;
+    if (!state || state.enemy.hp > 0 || victoryHandled || defeatHandled) return;
     state.fighting = false;
+    engaged = false;
+    victoryHandled = true;
     if (state.save.treatBonus > 0) state.save.treatBonus -= 1;
     if (onVictory) onVictory();
   }
@@ -204,12 +231,13 @@ const Combat = (() => {
       tapBoostCooldown,
       abilityCooldowns: { ...abilityCooldowns },
       shieldActive,
+      defeatHandled,
     });
   }
 
   function resetEnemy() {
     if (!state) return;
-    const animalData = getAnimalStats(state.save.currentAnimalIndex);
+    const animalData = animalForSave(state.save);
     state.enemy = { ...animalData };
     const playerStats = getPlayerCombatStats(state.save);
     state.playerHp = playerStats.maxHp;
@@ -219,6 +247,8 @@ const Combat = (() => {
     state.enemyAttackTimer = 0;
     state.fighting = false;
     engaged = false;
+    defeatHandled = false;
+    victoryHandled = false;
     notify();
   }
 

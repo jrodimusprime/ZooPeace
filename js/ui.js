@@ -261,7 +261,7 @@ const UI = (() => {
     if (!animal) return;
 
     const kills = getKillCount(save, idx);
-    const stats = getAnimalStats(idx);
+    const stats = getAnimalStats(idx, save.level);
     const rarity = getAnimalRarity(idx);
 
     setText('#enemy-emoji', animal.emoji);
@@ -441,16 +441,31 @@ const UI = (() => {
   }
 
   function handleDefeat() {
+    // Stop combat UI spam; modal is the only recovery path.
     $('#defeat-modal')?.classList.remove('hidden');
     setCommandPrompt(t('knockedOutPrompt'));
+    const engageBtn = $('#btn-engage');
+    const strikeBtn = $('#btn-strike');
+    engageBtn?.classList.add('hidden');
+    strikeBtn?.classList.add('hidden');
   }
 
   function hideDefeatModal() {
     $('#defeat-modal')?.classList.add('hidden');
-    setTimeout(() => {
-      Combat.resetEnemy();
-      setCommandPrompt(t('wildAppears', { name: animalName(ANIMALS[save.currentAnimalIndex].name) }));
-    }, 500);
+    const previous = save.currentAnimalIndex;
+    // Always leave the animal that just knocked you out — stops death loops.
+    save.currentAnimalIndex = selectSaferEncounter(save, previous);
+    writeSave(save);
+    Combat.resetEnemy();
+    renderFight();
+    const animal = ANIMALS[save.currentAnimalIndex];
+    const display = animalName(animal.name);
+    const status = $('#encounter-status');
+    if (status) {
+      status.textContent = t('recoveredNew', { emoji: animal.emoji, name: display });
+      status.className = 'encounter-status';
+    }
+    setCommandPrompt(t('recoveredPrompt', { name: display }));
   }
 
   function renderStats() {

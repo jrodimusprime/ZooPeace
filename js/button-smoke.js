@@ -91,6 +91,10 @@ const ButtonSmoke = {
     this.assert(animalName('Lion') === 'शेर', 'Hindi animal name for Lion');
     setLanguage('en');
 
+    // Soft-cap: level-1 scorpion should not melt players
+    const scorp = getAnimalStats(106, 1);
+    this.assert(scorp.spd <= 2 && scorp.atk <= 8, 'level-1 scorpion is soft-capped');
+
     const passed = this.results.filter((r) => r.pass).length;
     const total = this.results.length;
     const summary = `${passed}/${total} button smoke tests passed`;

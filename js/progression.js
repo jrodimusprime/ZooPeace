@@ -53,6 +53,35 @@ function selectNextEncounter(save, excludeIndex = -1, random = Math.random) {
   return candidates[candidates.length - 1].index;
 }
 
+/** After a loss, prefer lower-threat animals so players aren't stuck in a death loop. */
+function selectSaferEncounter(save, excludeIndex = -1, random = Math.random) {
+  const start = getUnlockedAnimalStartIndex(save);
+  const candidates = [];
+  let totalWeight = 0;
+
+  for (let index = start; index < ANIMALS.length; index++) {
+    if (index === excludeIndex && ANIMALS.length - start > 1) continue;
+    const animal = ANIMALS[index];
+    const threat = Math.max(1, animal.baseAtk * animal.baseSpd);
+    // Invert threat — safer animals get higher weight.
+    let weight = 120 / threat;
+    const rarity = getAnimalRarity(index);
+    if (rarity === 'common') weight *= 1.4;
+    if (rarity === 'legendary') weight *= 0.4;
+    const kills = getKillCount(save, index);
+    if (kills >= KILLS_PER_ANIMAL) weight *= 0.2;
+    totalWeight += weight;
+    candidates.push({ index, weight });
+  }
+
+  let roll = random() * totalWeight;
+  for (const candidate of candidates) {
+    roll -= candidate.weight;
+    if (roll <= 0) return candidate.index;
+  }
+  return candidates[candidates.length - 1].index;
+}
+
 function checkGameComplete(save) {
   const allPacified = ANIMALS.every((_, index) => isAnimalPacified(save, index));
   if (allPacified) {

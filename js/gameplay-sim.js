@@ -92,14 +92,24 @@ const GameplaySim = {
 
     // Combat: starter should beat small animal
     const starter = getPlayerCombatStats(save);
-    const ant = getAnimalStats(109);
+    const ant = getAnimalStats(109, 1);
     const vsAnt = this.simulateCombat(starter, ant);
     this.assert(vsAnt === 'win', 'starter beats ant');
 
-    // Combat: starter should lose to whale
-    const whale = getAnimalStats(0);
+    // Soft-cap prevents early death loops vs fast bugs
+    const scorpion = getAnimalStats(106, 1);
+    this.assert(scorpion.spd <= 2, 'scorpion speed soft-capped at level 1');
+    this.assert(scorpion.atk <= 8, 'scorpion attack soft-capped at level 1');
+
+    // Combat: starter should lose to whale (huge HP)
+    const whale = getAnimalStats(0, 1);
     const vsWhale = this.simulateCombat(starter, whale);
     this.assert(vsWhale === 'loss', 'starter loses to whale');
+
+    // After a loss, safer encounter avoids the same animal
+    save.currentAnimalIndex = 106;
+    const safer = selectSaferEncounter(save, 106, () => 0.01);
+    this.assert(safer !== 106, 'safer encounter excludes the animal that just won');
 
     // Upgrades matter
     save.gold = 9999;
