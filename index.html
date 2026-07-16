@@ -13,6 +13,16 @@
      crossorigin="anonymous"></script>
 </head>
 <body>
+  <!-- Always-on horizontal banner (game_horizontal) -->
+  <div id="ad-top" class="ad-top" aria-label="Advertisement">
+    <ins id="ad-top-slot" class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-8968684526399437"
+         data-ad-slot="5575955375"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  </div>
+
   <!-- Onboarding -->
   <div id="onboarding" class="onboarding">
     <div class="onboarding-card">
@@ -38,10 +48,6 @@
       </div>
 
       <button id="btn-begin" class="btn btn-primary" type="button" data-i18n="begin">Begin Peace Mission</button>
-      <div class="ad-unit ad-unit-inline">
-        <p class="ad-label" data-i18n="adLabel">Ad</p>
-        <div class="ad-slot" data-ad-slot-host id="ad-slot-onboarding"></div>
-      </div>
       <p class="legal-link"><a href="privacy.html">Privacy Policy</a></p>
     </div>
   </div>
@@ -218,29 +224,12 @@
       <div id="map-grid" class="map-grid"></div>
     </main>
 
-    <!-- Persistent banner above nav -->
-    <div id="ad-banner-game" class="ad-banner">
-      <p class="ad-label" data-i18n="adLabel">Ad</p>
-      <div class="ad-slot" data-ad-slot-host id="ad-slot-banner"></div>
-    </div>
-
     <!-- Bottom Nav -->
     <nav class="bottom-nav">
       <button class="nav-tab active" data-tab="fight" type="button" data-i18n="navFight">⚔️ Fight</button>
       <button class="nav-tab" data-tab="stats" type="button" data-i18n="navStats">📊 Stats</button>
       <button class="nav-tab" data-tab="map" type="button" data-i18n="navMap">🗺️ Map</button>
     </nav>
-  </div>
-
-  <!-- Victory ad (5 seconds) -->
-  <div id="victory-ad-overlay" class="modal hidden">
-    <div class="modal-card victory-ad-card">
-      <h2 data-i18n="victoryAdTitle">Peace break</h2>
-      <p class="ad-label" data-i18n="adLabel">Ad</p>
-      <div class="ad-slot ad-slot-victory" data-ad-slot-host id="ad-slot-victory"></div>
-      <p class="victory-ad-countdown">⏱ <span id="victory-ad-seconds">5</span>s</p>
-      <button id="btn-victory-ad-continue" class="btn btn-primary btn-waiting" type="button" disabled>Continue (5)</button>
-    </div>
   </div>
 
   <!-- Victory Modal -->

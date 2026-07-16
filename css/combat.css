@@ -95,7 +95,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(var(--nav-height) + var(--ad-banner-height) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
   width: 100%;
   max-width: 480px;
   z-index: 90;
@@ -248,7 +248,7 @@
 }
 
 .screen-fight {
-  padding-bottom: calc(var(--nav-height) + var(--ad-banner-height) + 168px) !important;
+  padding-bottom: calc(var(--nav-height) + 168px) !important;
 }
 
 .challenges-section {
