@@ -27,9 +27,12 @@ const UI = (() => {
     onPress($('#btn-engage'), () => {
       if (!Combat.isActive()) ensureCombat();
       Combat.engage();
-      setCommandPrompt('Go! Auto-battling… tap STRIKE for a boost!');
+      showTaunt();
     });
-    onPress($('#btn-strike'), () => Combat.tapStrike());
+    onPress($('#btn-strike'), () => {
+      Combat.tapStrike();
+      showTaunt();
+    });
     onPress($('#btn-run'), () => {
       if (!Combat.isActive()) ensureCombat();
       Combat.flee();
@@ -93,6 +96,17 @@ const UI = (() => {
   function setCommandPrompt(text) {
     const el = $('#command-prompt-text');
     if (el) el.textContent = text;
+  }
+
+  function showTaunt() {
+    if (!save) return;
+    const taunt = getRandomTaunt(save.currentAnimalIndex);
+    setCommandPrompt(taunt);
+    const status = $('#encounter-status');
+    if (status) {
+      status.textContent = taunt;
+      status.className = 'encounter-status taunt';
+    }
   }
 
   function onBegin() {

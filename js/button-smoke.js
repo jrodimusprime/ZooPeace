@@ -73,6 +73,13 @@ const ButtonSmoke = {
     const fledOrFailed = UI.getSave().currentAnimalIndex !== midAnimal || status.includes('Could not escape');
     this.assert(fledOrFailed, 'RUN during combat either escapes or fails with message');
 
+    // Taunts
+    this.assert(typeof getRandomTaunt === 'function', 'taunt helper loaded');
+    this.assert(getAnimalTaunts(109).length === 10, 'each animal has 10 taunts');
+    this.assert(getAnimalTaunts(0).length === 10, 'whale has 10 taunts');
+    const t1 = getRandomTaunt(109);
+    this.assert(typeof t1 === 'string' && t1.length > 5, 'random taunt returns text');
+
     const passed = this.results.filter((r) => r.pass).length;
     const total = this.results.length;
     const summary = `${passed}/${total} button smoke tests passed`;

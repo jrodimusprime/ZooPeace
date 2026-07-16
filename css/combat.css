@@ -199,6 +199,17 @@
   color: var(--danger);
 }
 
+.encounter-status.taunt {
+  color: var(--accent);
+  font-weight: 600;
+  animation: taunt-pop 0.25s ease;
+}
+
+@keyframes taunt-pop {
+  from { transform: scale(0.96); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 .abilities {
   display: flex;
   gap: 8px;
