@@ -88,7 +88,13 @@ const UI = (() => {
     });
     onPress($('#btn-continue'), hideVictoryModal);
     onPress($('#btn-levelup-ok'), hideLevelUpModal);
-    onPress($('#btn-defeat-ok'), hideDefeatModal);
+    onPress($('#btn-defeat-ok'), beginRecover);
+    onPress($('#btn-recover-ad-continue'), () => {
+      const btn = $('#btn-recover-ad-continue');
+      if (btn?.disabled) return;
+      if (typeof Ads !== 'undefined') Ads.hideRecoverBreak();
+      finishRecover();
+    });
     onPress($('#btn-lang-header'), () => $('#lang-modal')?.classList.remove('hidden'));
     onPress($('#btn-lang-close'), () => $('#lang-modal')?.classList.add('hidden'));
 
@@ -629,7 +635,17 @@ const UI = (() => {
     $$('.battle-only').forEach((b) => b.classList.add('hidden'));
   }
 
-  function hideDefeatModal() {
+  function beginRecover() {
+    $('#defeat-modal')?.classList.add('hidden');
+    if (typeof Ads !== 'undefined' && Ads.presentRecoverBreak) {
+      Ads.presentRecoverBreak(finishRecover);
+    } else {
+      finishRecover();
+    }
+  }
+
+  function finishRecover() {
+    if (typeof Ads !== 'undefined') Ads.hideRecoverBreak();
     $('#defeat-modal')?.classList.add('hidden');
     const previous = save.currentAnimalIndex;
     // Always leave the animal that just knocked you out — stops death loops.
