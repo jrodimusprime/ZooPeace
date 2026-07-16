@@ -3,59 +3,79 @@ const UI = (() => {
   const $$ = (sel) => document.querySelectorAll(sel);
 
   let save = null;
+  let eventsBound = false;
 
   function init(gameSave) {
     save = gameSave;
     bindEvents();
   }
 
+  function onPress(el, handler) {
+    if (!el) return;
+    const run = (event) => {
+      event.preventDefault();
+      handler(event);
+    };
+    el.addEventListener('click', run);
+  }
+
   function bindEvents() {
-    $('#btn-begin')?.addEventListener('click', onBegin);
-    $('#btn-engage')?.addEventListener('click', () => Combat.engage());
-    $('#btn-strike')?.addEventListener('click', () => Combat.tapStrike());
-    $('#btn-run')?.addEventListener('click', () => Combat.flee());
-    $('#btn-continue')?.addEventListener('click', hideVictoryModal);
-    $('#btn-defeat-ok')?.addEventListener('click', hideDefeatModal);
+    if (eventsBound) return;
+    eventsBound = true;
+
+    onPress($('#btn-begin'), onBegin);
+    onPress($('#btn-engage'), () => {
+      if (!Combat.isActive()) ensureCombat();
+      Combat.engage();
+      setCommandPrompt('Go! Auto-battling… tap STRIKE for a boost!');
+    });
+    onPress($('#btn-strike'), () => Combat.tapStrike());
+    onPress($('#btn-run'), () => {
+      if (!Combat.isActive()) ensureCombat();
+      Combat.flee();
+    });
+    onPress($('#btn-continue'), hideVictoryModal);
+    onPress($('#btn-defeat-ok'), hideDefeatModal);
 
     $$('.nav-tab').forEach((tab) => {
-      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+      onPress(tab, () => switchTab(tab.dataset.tab));
     });
 
     $$('.upgrade-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      onPress(btn, () => {
         if (upgradeStat(save, btn.dataset.stat)) {
           writeSave(save);
           renderStats();
           renderFightHeader();
+          if (Combat.isActive()) Combat.resetEnemy();
         }
       });
     });
 
     $$('.free-point-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      onPress(btn, () => {
         if (spendFreePoint(save, btn.dataset.stat)) {
           writeSave(save);
           renderStats();
           renderFightHeader();
+          if (Combat.isActive()) Combat.resetEnemy();
         }
       });
     });
 
-    $('#btn-buy-treat')?.addEventListener('click', () => {
+    onPress($('#btn-buy-treat'), () => {
       if (buyTreat(save)) {
         writeSave(save);
         renderStats();
       }
     });
 
-    $$('.ability-btn').forEach((btn) => {
-      btn.addEventListener('click', () => Combat.useAbility(btn.dataset.ability));
-    });
-
-    $('#btn-reset')?.addEventListener('click', () => {
+    onPress($('#btn-reset'), () => {
       if (confirm('Reset all progress? This cannot be undone.')) {
+        Combat.stopCombat();
         save = resetSave();
         showOnboarding();
+        $('#command-panel')?.classList.add('hidden');
       }
     });
 
@@ -68,6 +88,11 @@ const UI = (() => {
         }
       }
     });
+  }
+
+  function setCommandPrompt(text) {
+    const el = $('#command-prompt-text');
+    if (el) el.textContent = text;
   }
 
   function onBegin() {
@@ -87,6 +112,7 @@ const UI = (() => {
   function showOnboarding() {
     $('#onboarding').classList.remove('hidden');
     $('#game').classList.add('hidden');
+    $('#command-panel')?.classList.add('hidden');
   }
 
   function hideOnboarding() {
@@ -98,26 +124,43 @@ const UI = (() => {
     $$('.screen').forEach((s) => s.classList.add('hidden'));
     $(`#screen-${tabId}`)?.classList.remove('hidden');
     $$('.nav-tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === tabId));
+
+    const panel = $('#command-panel');
+    if (panel) {
+      panel.classList.toggle('hidden', tabId !== 'fight' || !save?.onboarded);
+    }
+
     if (tabId === 'stats') renderStats();
     if (tabId === 'map') renderMap();
-    if (tabId === 'fight') renderFight();
+    if (tabId === 'fight') {
+      renderFight();
+      if (!Combat.isActive()) ensureCombat();
+    }
   }
 
-  function startGame() {
-    tickPassiveXp(save);
-    if (!save.encounterInitialized) {
-      save.currentAnimalIndex = selectNextEncounter(save);
-      save.encounterInitialized = true;
-      writeSave(save);
-    }
-    renderAll();
+  function ensureCombat() {
+    if (!save) return;
     Combat.startCombat(save, {
       onUpdate: updateCombatUI,
       onVictory: handleVictory,
       onDefeat: handleDefeat,
       onFlee: handleFlee,
     });
+  }
+
+  function startGame() {
+    tickPassiveXp(save);
+    if (!save.encounterInitialized || save.currentAnimalIndex == null || !ANIMALS[save.currentAnimalIndex]) {
+      save.currentAnimalIndex = selectNextEncounter(save);
+      save.encounterInitialized = true;
+      writeSave(save);
+    }
+
+    // Start combat BEFORE rendering so buttons always have an active battle state.
+    ensureCombat();
+    renderAll();
     switchTab('fight');
+    setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
   }
 
   function renderAll() {
@@ -128,40 +171,57 @@ const UI = (() => {
   }
 
   function renderFightHeader() {
-    $('#header-name').textContent = `${save.avatar} ${save.playerName}`;
+    const nameEl = $('#header-name');
+    if (!nameEl) return;
+    nameEl.textContent = `${save.avatar} ${save.playerName}`;
     $('#header-level').textContent = `Lv. ${save.level}`;
     $('#header-title').textContent = getPlayerTitle(save);
     $('#header-gold').textContent = `🪙 ${save.gold}`;
-    $('#player-xp-bar').style.width = `${(save.xp / xpForLevel(save.level)) * 100}%`;
-    $('#player-xp-text').textContent = `${save.xp} / ${xpForLevel(save.level)} XP`;
+    const needed = xpForLevel(save.level);
+    $('#player-xp-bar').style.width = `${Math.min(100, (save.xp / needed) * 100)}%`;
+    $('#player-xp-text').textContent = `${save.xp} / ${needed} XP`;
   }
 
   function renderFight() {
     const idx = save.currentAnimalIndex;
     const animal = ANIMALS[idx];
+    if (!animal) return;
+
     const kills = getKillCount(save, idx);
     const stats = getAnimalStats(idx);
-
-    $('#enemy-emoji').textContent = animal.emoji;
-    $('#enemy-name').textContent = animal.name;
-    $('#enemy-tier').textContent = TIER_NAMES[animal.tier];
     const rarity = getAnimalRarity(idx);
-    $('#enemy-rarity').textContent = RARITY_CONFIG[rarity].label;
-    $('#enemy-rarity').className = `rarity rarity-${rarity}`;
-    $('#kill-count').textContent = `${kills} / ${KILLS_PER_ANIMAL}`;
-    $('#kill-bar').style.width = `${(kills / KILLS_PER_ANIMAL) * 100}%`;
+
+    setText('#enemy-emoji', animal.emoji);
+    setText('#enemy-name', animal.name);
+    setText('#enemy-tier', TIER_NAMES[animal.tier]);
+
+    const rarityEl = $('#enemy-rarity');
+    if (rarityEl) {
+      rarityEl.textContent = RARITY_CONFIG[rarity].label;
+      rarityEl.className = `rarity rarity-${rarity}`;
+    }
+
+    setText('#kill-count', `${kills} / ${KILLS_PER_ANIMAL}`);
+    const killBar = $('#kill-bar');
+    if (killBar) killBar.style.width = `${(kills / KILLS_PER_ANIMAL) * 100}%`;
 
     if (stats) {
-      $('#enemy-hp-bar').style.width = '100%';
-      $('#enemy-hp-text').textContent = `${stats.maxHp} HP`;
+      const enemyBar = $('#enemy-hp-bar');
+      if (enemyBar) enemyBar.style.width = '100%';
+      setText('#enemy-hp-text', `${stats.maxHp} / ${stats.maxHp}`);
     }
 
     const playerStats = getPlayerCombatStats(save);
-    $('#fight-atk').textContent = playerStats.attack;
-    $('#fight-def').textContent = playerStats.defence;
-    $('#fight-spd').textContent = playerStats.speed.toFixed(1);
+    setText('#fight-atk', playerStats.attack);
+    setText('#fight-def', playerStats.defence);
+    setText('#fight-spd', playerStats.speed.toFixed(1));
 
     renderAbilities();
+  }
+
+  function setText(sel, value) {
+    const el = $(sel);
+    if (el) el.textContent = value;
   }
 
   function renderAbilities() {
@@ -176,42 +236,46 @@ const UI = (() => {
     for (const id of save.unlockedAbilities) {
       const meta = abilityMeta[id];
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'ability-btn';
       btn.dataset.ability = id;
       btn.textContent = `${meta.emoji} ${meta.label}`;
+      onPress(btn, () => Combat.useAbility(id));
       container.appendChild(btn);
-      btn.addEventListener('click', () => Combat.useAbility(id));
     }
   }
 
   function updateCombatUI(combatState) {
-    $('#player-hp-bar').style.width = `${(combatState.playerHp / combatState.playerMaxHp) * 100}%`;
-    $('#player-hp-text').textContent = `${Math.ceil(combatState.playerHp)} / ${combatState.playerMaxHp}`;
+    const playerBar = $('#player-hp-bar');
+    const enemyBar = $('#enemy-hp-bar');
+    if (playerBar) {
+      playerBar.style.width = `${(combatState.playerHp / combatState.playerMaxHp) * 100}%`;
+    }
+    setText('#player-hp-text', `${Math.ceil(combatState.playerHp)} / ${combatState.playerMaxHp}`);
 
-    $('#enemy-hp-bar').style.width = `${(combatState.enemyHp / combatState.enemyMaxHp) * 100}%`;
-    $('#enemy-hp-text').textContent = `${Math.ceil(combatState.enemyHp)} / ${combatState.enemyMaxHp}`;
+    if (enemyBar) {
+      enemyBar.style.width = `${(combatState.enemyHp / combatState.enemyMaxHp) * 100}%`;
+    }
+    setText('#enemy-hp-text', `${Math.ceil(combatState.enemyHp)} / ${combatState.enemyMaxHp}`);
 
     const engageBtn = $('#btn-engage');
     const strikeBtn = $('#btn-strike');
+    const runBtn = $('#btn-run');
+
     if (combatState.fighting) {
-      engageBtn.classList.add('hidden');
-      strikeBtn.classList.remove('hidden');
-      $('#enemy-emoji').classList.add('shake');
-    } else if (!combatState.engaged) {
-      engageBtn.classList.remove('hidden');
-      strikeBtn.classList.add('hidden');
-      $('#enemy-emoji').classList.remove('shake');
+      engageBtn?.classList.add('hidden');
+      strikeBtn?.classList.remove('hidden');
+      $('#enemy-emoji')?.classList.add('shake');
+      if (runBtn) runBtn.disabled = false;
     } else {
-      engageBtn.classList.remove('hidden');
-      strikeBtn.classList.add('hidden');
-      $('#enemy-emoji').classList.remove('shake');
+      engageBtn?.classList.remove('hidden');
+      strikeBtn?.classList.add('hidden');
+      $('#enemy-emoji')?.classList.remove('shake');
+      if (runBtn) runBtn.disabled = false;
     }
 
-    if (combatState.shieldActive) {
-      $('#shield-indicator').classList.remove('hidden');
-    } else {
-      $('#shield-indicator').classList.add('hidden');
-    }
+    const shield = $('#shield-indicator');
+    if (shield) shield.classList.toggle('hidden', !combatState.shieldActive);
   }
 
   function handleVictory() {
@@ -237,46 +301,53 @@ const UI = (() => {
     checkGameComplete(save);
     writeSave(save);
 
-    $('#victory-message').textContent = 'One Step Closer to Peace';
-    $('#victory-xp').textContent = `+${xpGain} XP`;
-    $('#victory-gold').textContent = `+${goldGain + streakBonus} Gold`;
-    $('#victory-kills').textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name}: ${killNum} / ${KILLS_PER_ANIMAL}`;
+    setText('#victory-message', 'One Step Closer to Peace');
+    setText('#victory-xp', `+${xpGain} XP`);
+    setText('#victory-gold', `+${goldGain + streakBonus} Gold`);
+    setText('#victory-kills', `${ANIMALS[idx].emoji} ${ANIMALS[idx].name}: ${killNum} / ${KILLS_PER_ANIMAL}`);
 
-    if (unlockedAfter > unlockedBefore) {
-      $('#victory-unlock').textContent = `${unlockedAfter - unlockedBefore} new animal encounters unlocked by your XP!`;
-      $('#victory-unlock').classList.remove('hidden');
-    } else if (killNum === KILLS_PER_ANIMAL) {
-      $('#victory-unlock').textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name} fully pacified!`;
-      $('#victory-unlock').classList.remove('hidden');
-    } else {
-      $('#victory-unlock').classList.add('hidden');
+    const unlockEl = $('#victory-unlock');
+    if (unlockEl) {
+      if (unlockedAfter > unlockedBefore) {
+        unlockEl.textContent = `${unlockedAfter - unlockedBefore} new animal encounters unlocked by your XP!`;
+        unlockEl.classList.remove('hidden');
+      } else if (killNum === KILLS_PER_ANIMAL) {
+        unlockEl.textContent = `${ANIMALS[idx].emoji} ${ANIMALS[idx].name} fully pacified!`;
+        unlockEl.classList.remove('hidden');
+      } else {
+        unlockEl.classList.add('hidden');
+      }
     }
 
     if (save.gameComplete) {
-      $('#victory-message').textContent = 'Zoo Peace Achieved!';
+      setText('#victory-message', 'Zoo Peace Achieved!');
     }
 
-    $('#victory-modal').classList.remove('hidden');
+    $('#victory-modal')?.classList.remove('hidden');
     renderFightHeader();
   }
 
   function hideVictoryModal() {
-    $('#victory-modal').classList.add('hidden');
+    $('#victory-modal')?.classList.add('hidden');
     if (save.gameComplete) {
-      $('#finale-overlay').classList.remove('hidden');
+      $('#finale-overlay')?.classList.remove('hidden');
     }
     const previous = save.currentAnimalIndex;
     save.currentAnimalIndex = selectNextEncounter(save, previous);
     writeSave(save);
     Combat.resetEnemy();
     renderFight();
+    setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
   }
 
   function handleFlee(success) {
     const status = $('#encounter-status');
     if (!success) {
-      status.textContent = 'Could not escape! The animal gets a free attack.';
-      status.className = 'encounter-status danger';
+      if (status) {
+        status.textContent = 'Could not escape! The animal gets a free attack.';
+        status.className = 'encounter-status danger';
+      }
+      setCommandPrompt('Escape failed! Keep fighting!');
       return;
     }
 
@@ -285,26 +356,36 @@ const UI = (() => {
     writeSave(save);
     Combat.resetEnemy();
     renderFight();
-    status.textContent = `Escaped safely. You encountered ${ANIMALS[save.currentAnimalIndex].emoji} ${ANIMALS[save.currentAnimalIndex].name}.`;
-    status.className = 'encounter-status';
+    const animal = ANIMALS[save.currentAnimalIndex];
+    if (status) {
+      status.textContent = `Got away safely! Next up: ${animal.emoji} ${animal.name}.`;
+      status.className = 'encounter-status';
+    }
+    setCommandPrompt(`Got away safely! A wild ${animal.name} appears!`);
   }
 
   function handleDefeat() {
-    $('#defeat-modal').classList.remove('hidden');
+    $('#defeat-modal')?.classList.remove('hidden');
+    setCommandPrompt('You were knocked out…');
   }
 
   function hideDefeatModal() {
-    $('#defeat-modal').classList.add('hidden');
-    setTimeout(() => Combat.resetEnemy(), 500);
+    $('#defeat-modal')?.classList.add('hidden');
+    setTimeout(() => {
+      Combat.resetEnemy();
+      setCommandPrompt(`A wild ${ANIMALS[save.currentAnimalIndex].name} appears!`);
+    }, 500);
   }
 
   function renderStats() {
-    $('#stats-level').textContent = save.level;
-    $('#stats-xp').textContent = `${save.xp} / ${xpForLevel(save.level)}`;
-    $('#stats-xp-bar').style.width = `${(save.xp / xpForLevel(save.level)) * 100}%`;
-    $('#stats-gold').textContent = save.gold;
-    $('#stats-kills').textContent = save.totalKills;
-    $('#free-points').textContent = save.freeStatPoints;
+    setText('#stats-level', save.level);
+    const needed = xpForLevel(save.level);
+    setText('#stats-xp', `${save.xp} / ${needed}`);
+    const xpBar = $('#stats-xp-bar');
+    if (xpBar) xpBar.style.width = `${Math.min(100, (save.xp / needed) * 100)}%`;
+    setText('#stats-gold', save.gold);
+    setText('#stats-kills', save.totalKills);
+    setText('#free-points', save.freeStatPoints);
 
     for (const key of Object.keys(STAT_CONFIG)) {
       const el = $(`#stat-${key}`);
@@ -320,8 +401,8 @@ const UI = (() => {
     }
 
     const progress = getOverallProgress(save);
-    $('#overall-progress').textContent = `${progress.pacified} / ${progress.total} animals pacified`;
-    $('#overall-kills').textContent = `${progress.kills} / ${progress.target} total defeats`;
+    setText('#overall-progress', `${progress.pacified} / ${progress.total} animals pacified`);
+    setText('#overall-kills', `${progress.kills} / ${progress.target} total defeats`);
   }
 
   function renderMap() {
@@ -370,5 +451,12 @@ const UI = (() => {
     }
   }
 
-  return { init, boot, getSave: () => save, setSave: (s) => { save = s; } };
+  return {
+    init,
+    boot,
+    getSave: () => save,
+    setSave: (s) => { save = s; },
+    ensureCombat,
+    startGame,
+  };
 })();

@@ -32,7 +32,7 @@
         <label><input type="radio" name="avatar" value="🧒"><span>🧒</span></label>
       </div>
 
-      <button id="btn-begin" class="btn btn-primary">Begin Peace Mission</button>
+      <button id="btn-begin" class="btn btn-primary" type="button">Begin Peace Mission</button>
     </div>
   </div>
 
@@ -54,7 +54,7 @@
     </header>
 
     <!-- Fight Screen -->
-    <main id="screen-fight" class="screen">
+    <main id="screen-fight" class="screen screen-fight">
       <div class="player-hp-section">
         <span>Your HP</span>
         <div class="hp-bar-wrap">
@@ -81,12 +81,7 @@
         </div>
       </div>
 
-      <div class="combat-actions">
-        <button id="btn-engage" class="btn btn-primary btn-large">⚔️ Engage</button>
-        <button id="btn-strike" class="btn btn-accent btn-large hidden">👊 TAP TO STRIKE</button>
-        <button id="btn-run" class="btn btn-run">🏃 Run Away</button>
-      </div>
-      <p id="encounter-status" class="encounter-status">Your XP level determines which animals can appear.</p>
+      <p id="encounter-status" class="encounter-status">What will you do?</p>
 
       <div id="abilities" class="abilities"></div>
 
@@ -96,6 +91,25 @@
         <span>SPD <strong id="fight-spd">2</strong></span>
       </div>
     </main>
+
+    <!-- Pokemon-style command panel (sticky above nav) -->
+    <div id="command-panel" class="command-panel hidden">
+      <p class="command-prompt"><span id="command-prompt-text">A wild animal appears!</span></p>
+      <div class="command-grid">
+        <button id="btn-engage" class="cmd-btn cmd-fight" type="button">
+          <span class="cmd-icon">⚔️</span>
+          <span class="cmd-label">FIGHT</span>
+        </button>
+        <button id="btn-strike" class="cmd-btn cmd-strike hidden" type="button">
+          <span class="cmd-icon">💥</span>
+          <span class="cmd-label">STRIKE</span>
+        </button>
+        <button id="btn-run" class="cmd-btn cmd-run" type="button">
+          <span class="cmd-icon">💨</span>
+          <span class="cmd-label">RUN</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Stats Screen -->
     <main id="screen-stats" class="screen hidden">
@@ -112,44 +126,44 @@
       <div class="upgrade-list">
         <div class="upgrade-row">
           <span>⚔️ Attack: <strong id="stat-attack">10</strong></span>
-          <button class="upgrade-btn btn btn-small" data-stat="attack">Upgrade (<span id="cost-attack">10</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="attack">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="attack" type="button">Upgrade (<span id="cost-attack">10</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="attack" type="button">+1 Free</button>
         </div>
         <div class="upgrade-row">
           <span>🛡️ Defence: <strong id="stat-defence">5</strong></span>
-          <button class="upgrade-btn btn btn-small" data-stat="defence">Upgrade (<span id="cost-defence">10</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="defence">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="defence" type="button">Upgrade (<span id="cost-defence">10</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="defence" type="button">+1 Free</button>
         </div>
         <div class="upgrade-row">
           <span>❤️ Vitality: <strong id="stat-vitality">100</strong></span>
-          <button class="upgrade-btn btn btn-small" data-stat="vitality">Upgrade (<span id="cost-vitality">12</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="vitality">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="vitality" type="button">Upgrade (<span id="cost-vitality">12</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="vitality" type="button">+1 Free</button>
         </div>
         <div class="upgrade-row">
           <span>⚡ Speed: <strong id="stat-speed">2</strong></span>
-          <button class="upgrade-btn btn btn-small" data-stat="speed">Upgrade (<span id="cost-speed">15</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="speed">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="speed" type="button">Upgrade (<span id="cost-speed">15</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="speed" type="button">+1 Free</button>
         </div>
         <div class="upgrade-row">
           <span>✨ Peace Aura: <strong id="stat-aura">0</strong>%</span>
-          <button class="upgrade-btn btn btn-small" data-stat="aura">Upgrade (<span id="cost-aura">20</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="aura">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="aura" type="button">Upgrade (<span id="cost-aura">20</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="aura" type="button">+1 Free</button>
         </div>
         <div class="upgrade-row">
           <span>📈 Resolve: <strong id="stat-resolve">0</strong>%</span>
-          <button class="upgrade-btn btn btn-small" data-stat="resolve">Upgrade (<span id="cost-resolve">18</span>🪙)</button>
-          <button class="free-point-btn btn btn-small btn-ghost" data-stat="resolve">+1 Free</button>
+          <button class="upgrade-btn btn btn-small" data-stat="resolve" type="button">Upgrade (<span id="cost-resolve">18</span>🪙)</button>
+          <button class="free-point-btn btn btn-small btn-ghost" data-stat="resolve" type="button">+1 Free</button>
         </div>
       </div>
 
-      <button id="btn-buy-treat" class="btn btn-secondary">🦴 Buy Treat (+10% dmg, 10 fights) — 25🪙</button>
+      <button id="btn-buy-treat" class="btn btn-secondary" type="button">🦴 Buy Treat (+10% dmg, 10 fights) — 25🪙</button>
 
       <div class="progress-section">
         <p id="overall-progress">0 / 110 animals pacified</p>
         <p id="overall-kills">0 / 11000 total defeats</p>
       </div>
 
-      <button id="btn-reset" class="btn btn-danger btn-small">Reset Progress</button>
+      <button id="btn-reset" class="btn btn-danger btn-small" type="button">Reset Progress</button>
     </main>
 
     <!-- Map Screen -->
@@ -160,9 +174,9 @@
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav">
-      <button class="nav-tab active" data-tab="fight">⚔️ Fight</button>
-      <button class="nav-tab" data-tab="stats">📊 Stats</button>
-      <button class="nav-tab" data-tab="map">🗺️ Map</button>
+      <button class="nav-tab active" data-tab="fight" type="button">⚔️ Fight</button>
+      <button class="nav-tab" data-tab="stats" type="button">📊 Stats</button>
+      <button class="nav-tab" data-tab="map" type="button">🗺️ Map</button>
     </nav>
   </div>
 
@@ -176,7 +190,7 @@
       <p id="victory-gold" class="reward">+0 Gold</p>
       <p id="victory-kills" class="kill-info"></p>
       <p id="victory-unlock" class="unlock hidden"></p>
-      <button id="btn-continue" class="btn btn-primary">Continue</button>
+      <button id="btn-continue" class="btn btn-primary" type="button">Continue</button>
     </div>
   </div>
 
@@ -186,7 +200,7 @@
       <p class="modal-emoji">💫</p>
       <h2>Knocked Out!</h2>
       <p>Rest up and try again.</p>
-      <button id="btn-defeat-ok" class="btn btn-primary">Recover</button>
+      <button id="btn-defeat-ok" class="btn btn-primary" type="button">Recover</button>
     </div>
   </div>
 

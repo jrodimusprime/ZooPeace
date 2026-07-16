@@ -14,6 +14,7 @@ const files = [
   'js/player.js',
   'js/progression.js',
   'js/test-runner.js',
+  'js/gameplay-sim.js',
 ];
 
 const context = { console, Math, Date, JSON };
@@ -24,5 +25,6 @@ for (const file of files) {
   vm.runInContext(code, context, { filename: file });
 }
 
-const ok = context.TestRunner.runLogicTests();
-process.exit(ok ? 0 : 1);
+const logicOk = context.TestRunner.runLogicTests();
+const gameplayOk = context.GameplaySim.run();
+process.exit(logicOk && gameplayOk ? 0 : 1);

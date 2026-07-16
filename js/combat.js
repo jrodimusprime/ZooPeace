@@ -76,7 +76,7 @@ const Combat = (() => {
     if (!state || !state.fighting || state.enemy.hp <= 0) return;
     if (tapBoostCooldown > 0) return;
     tapBoostActive = true;
-    tapBoostCooldown = 5;
+    tapBoostCooldown = 1;
     doPlayerAttack(true);
     notify();
   }
