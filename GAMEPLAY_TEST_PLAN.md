@@ -11,13 +11,29 @@ How to actually play-test (and simulate) the game without grinding 11,000 fights
 
 | Method | Time | Best for |
 |--------|------|----------|
-| **A. Automated sim** | 30 sec | Encounter pools, flee odds, combat math |
-| **B. Guided play sessions** | 5–30 min | Does it *feel* fun on a phone? |
-| **C. Console cheats** | 1 min | Jump to a specific scenario |
+| **A. Button smoke (Chrome)** | 5 sec | FIGHT / RUN actually clickable |
+| **B. Automated sim** | 30 sec | Encounter pools, flee odds, combat math |
+| **C. Guided play sessions** | 5–30 min | Does it *feel* fun on a phone? |
+| **D. Console cheats** | 1 min | Jump to a specific scenario |
 
 ---
 
-## A. Automated gameplay simulation
+## A. Button smoke tests (must pass)
+
+```bash
+python3 -m http.server 8080
+python3 scripts/chrome-smoke.py
+```
+
+Or open `http://localhost:8080/index.html?smoke=1`
+
+**Pass:** `13/13 button smoke tests passed`
+
+Checks: onboarding → FIGHT visible → RUN changes animal → FIGHT starts damage → STRIKE appears → mid-fight RUN works.
+
+---
+
+## B. Automated gameplay simulation
 
 Open DevTools console on:
 
@@ -45,7 +61,7 @@ http://localhost:8080/index.html?test=1
 
 ---
 
-## B. Guided play sessions
+## C. Guided play sessions
 
 ### Session 1 — Smoke test (5 min)
 
@@ -90,7 +106,7 @@ Goal: XP unlocks bigger animals; rarity matters.
 
 ---
 
-## C. Console cheats
+## D. Console cheats
 
 Open DevTools → Console on the game page.
 
