@@ -28,6 +28,7 @@ function createDefaultSave() {
     totalKills: 0,
     winStreak: 0,
     treatBonus: 0,
+    challenges: { dailyDate: '', daily: [], session: [] },
     gameComplete: false,
     createdAt: new Date().toISOString(),
     lastSaved: new Date().toISOString(),

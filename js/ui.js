@@ -75,6 +75,13 @@ const UI = (() => {
       Combat.tapStrike();
       showTaunt();
     });
+    onPress($('#btn-power'), () => {
+      Combat.powerStrike();
+      showTaunt();
+    });
+    onPress($('#btn-guard'), () => Combat.guard());
+    onPress($('#btn-taunt'), () => Combat.taunt());
+    onPress($('#btn-peace'), () => Combat.peaceOffer());
     onPress($('#btn-run'), () => {
       if (!Combat.isActive()) ensureCombat();
       Combat.flee();
@@ -204,16 +211,19 @@ const UI = (() => {
 
   function ensureCombat() {
     if (!save) return;
+    ensureChallenges(save);
     Combat.startCombat(save, {
       onUpdate: updateCombatUI,
       onVictory: handleVictory,
       onDefeat: handleDefeat,
       onFlee: handleFlee,
+      onFlash: (msg) => setCommandPrompt(msg),
     });
   }
 
   function startGame() {
     tickPassiveXp(save);
+    ensureChallenges(save);
     if (!save.encounterInitialized || save.currentAnimalIndex == null || !ANIMALS[save.currentAnimalIndex]) {
       save.currentAnimalIndex = selectNextEncounter(save);
       save.encounterInitialized = true;
@@ -334,50 +344,135 @@ const UI = (() => {
     const engageBtn = $('#btn-engage');
     const strikeBtn = $('#btn-strike');
     const runBtn = $('#btn-run');
+    const battleOnly = $$('.battle-only');
 
     if (combatState.fighting) {
       engageBtn?.classList.add('hidden');
       strikeBtn?.classList.remove('hidden');
+      battleOnly.forEach((b) => b.classList.remove('hidden'));
       $('#enemy-emoji')?.classList.add('shake');
       if (runBtn) runBtn.disabled = false;
     } else {
       engageBtn?.classList.remove('hidden');
       strikeBtn?.classList.add('hidden');
+      battleOnly.forEach((b) => b.classList.add('hidden'));
       $('#enemy-emoji')?.classList.remove('shake');
       if (runBtn) runBtn.disabled = false;
+    }
+
+    // Peace only when ready
+    const peaceBtn = $('#btn-peace');
+    if (peaceBtn) {
+      peaceBtn.classList.toggle('hidden', !combatState.fighting || !combatState.peaceReady);
+    }
+
+    const guardBtn = $('#btn-guard');
+    if (guardBtn) {
+      guardBtn.classList.toggle('ready', combatState.fighting && combatState.guardWindow > 0);
+      guardBtn.disabled = combatState.guardCooldown > 0;
+    }
+
+    const tauntBtn = $('#btn-taunt');
+    if (tauntBtn) tauntBtn.disabled = !!combatState.tauntActive;
+
+    const comboHud = $('#combo-hud');
+    if (comboHud) {
+      if (combatState.combo >= 2) {
+        comboHud.textContent = t('comboLabel', { n: combatState.combo });
+        comboHud.classList.remove('hidden');
+      } else {
+        comboHud.classList.add('hidden');
+      }
+    }
+
+    const streakHud = $('#streak-hud');
+    if (streakHud) {
+      const heat = streakHeatLabel(combatState.streak || 0);
+      if (heat) {
+        streakHud.textContent = heat;
+        streakHud.classList.remove('hidden');
+      } else {
+        streakHud.classList.add('hidden');
+      }
+    }
+
+    const rageHud = $('#rage-hud');
+    if (rageHud) {
+      rageHud.textContent = t('rageLabel');
+      rageHud.classList.toggle('hidden', !combatState.rage);
+    }
+
+    const quirkBadge = $('#quirk-badge');
+    if (quirkBadge) {
+      const label = quirkLabel(combatState.quirk);
+      if (label) {
+        quirkBadge.textContent = `${t('quirk_label')}: ${label}`;
+        quirkBadge.classList.remove('hidden');
+      } else {
+        quirkBadge.classList.add('hidden');
+      }
     }
 
     const shield = $('#shield-indicator');
     if (shield) shield.classList.toggle('hidden', !combatState.shieldActive);
   }
 
-  function handleVictory() {
+  function handleVictory(fightStats = {}) {
     const idx = save.currentAnimalIndex;
     const unlockedBefore = getUnlockedAnimalCount(save);
     const killNum = recordKill(save, idx);
-    const xp = getXpReward(idx, killNum);
-    const gold = getGoldReward(idx);
+    let xp = getXpReward(idx, killNum);
+    let gold = getGoldReward(idx);
 
-    let xpGain = xp;
-    let goldGain = gold;
     if (killNum === KILLS_PER_ANIMAL) {
-      xpGain = xp * 5;
-      goldGain = gold * 5;
+      xp *= 5;
+      gold *= 5;
     }
-    addXp(save, xpGain);
-    save.gold += goldGain;
+
+    // Streak heat
+    const mult = streakMultiplier(save.winStreak);
+    xp = Math.floor(xp * mult);
+    gold = Math.floor(gold * mult);
+
+    // Combo / crit bonuses
+    if ((fightStats.maxCombo || fightStats.combo || 0) >= 5) {
+      xp = Math.floor(xp * 1.1);
+      gold = Math.floor(gold * 1.1);
+    }
+    if ((fightStats.crits || 0) > 0) {
+      xp += fightStats.crits * 3;
+    }
+
+    addXp(save, xp);
+    save.gold += gold;
+
+    bumpChallenge(save, 'daily_wins');
+    const rarity = getAnimalRarity(idx);
+    if (rarity === 'rare' || rarity === 'legendary') bumpChallenge(save, 'sess_rare');
+
+    const claimed = claimReadyChallenges(save);
+    if (claimed.xp || claimed.gold) {
+      addXp(save, claimed.xp);
+      save.gold += claimed.gold;
+    }
+
     const unlockedAfter = getUnlockedAnimalCount(save);
-
-    const streakBonus = save.winStreak >= 10 ? Math.floor(goldGain * 0.2) : 0;
-    save.gold += streakBonus;
-
     checkGameComplete(save);
     writeSave(save);
 
     const display = animalName(ANIMALS[idx].name);
     setText('#victory-message', t('oneStepCloser'));
-    setText('#victory-xp', `+${xpGain} XP`);
-    setText('#victory-gold', `+${goldGain + streakBonus} ${t('gold')}`);
+    let xpLine = `+${xp} XP`;
+    let goldLine = `+${gold} ${t('gold')}`;
+    if (mult > 1) {
+      xpLine += ` (${t('streakBonus')})`;
+      goldLine += ` (${t('streakBonus')})`;
+    }
+    if (claimed.claimed?.length) {
+      xpLine += ` · ${t('challengeClaimed', { xp: claimed.xp, gold: claimed.gold })}`;
+    }
+    setText('#victory-xp', xpLine);
+    setText('#victory-gold', goldLine);
     setText('#victory-kills', `${ANIMALS[idx].emoji} ${display}: ${killNum} / ${KILLS_PER_ANIMAL}`);
 
     const unlockEl = $('#victory-unlock');
@@ -441,13 +536,11 @@ const UI = (() => {
   }
 
   function handleDefeat() {
-    // Stop combat UI spam; modal is the only recovery path.
     $('#defeat-modal')?.classList.remove('hidden');
     setCommandPrompt(t('knockedOutPrompt'));
-    const engageBtn = $('#btn-engage');
-    const strikeBtn = $('#btn-strike');
-    engageBtn?.classList.add('hidden');
-    strikeBtn?.classList.add('hidden');
+    $('#btn-engage')?.classList.add('hidden');
+    $('#btn-strike')?.classList.add('hidden');
+    $$('.battle-only').forEach((b) => b.classList.add('hidden'));
   }
 
   function hideDefeatModal() {
@@ -495,6 +588,25 @@ const UI = (() => {
     setText('#overall-progress', t('animalsPacified', { n: progress.pacified, total: progress.total }));
     setText('#overall-kills', t('totalKillsProgress', { n: progress.kills, total: progress.target }));
     renderLangPickers();
+    renderChallenges();
+  }
+
+  function renderChallenges() {
+    const list = $('#challenges-list');
+    if (!list || !save) return;
+    ensureChallenges(save);
+    list.innerHTML = '';
+    const all = [...save.challenges.daily, ...save.challenges.session];
+    for (const c of all) {
+      const row = document.createElement('div');
+      row.className = 'challenge-row' + (c.claimed || c.progress >= c.target ? ' done' : '');
+      const pct = Math.min(100, Math.floor((c.progress / c.target) * 100));
+      row.innerHTML = `
+        <div>${t(c.key)} — ${c.progress}/${c.target}${c.claimed ? ' ✓' : ''}</div>
+        <div class="challenge-bar"><span style="width:${pct}%"></span></div>
+      `;
+      list.appendChild(row);
+    }
   }
 
   function renderMap() {

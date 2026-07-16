@@ -73,12 +73,18 @@
       <div class="arena">
         <p id="enemy-tier" class="tier-label">The Final Peace</p>
         <p><span id="enemy-rarity" class="rarity rarity-common">Common</span></p>
+        <p id="quirk-badge" class="quirk-badge hidden"></p>
         <div id="enemy-emoji" class="enemy-emoji">🐜</div>
         <h2 id="enemy-name">Ant</h2>
         <div class="hp-bar-wrap enemy">
           <div id="enemy-hp-bar" class="hp-bar enemy-hp"></div>
         </div>
         <p id="enemy-hp-text">500 / 500</p>
+        <div id="fun-hud" class="fun-hud">
+          <span id="combo-hud" class="fun-chip hidden">Combo x0</span>
+          <span id="streak-hud" class="fun-chip heat hidden"></span>
+          <span id="rage-hud" class="fun-chip rage hidden">🔥 LAST STAND</span>
+        </div>
         <div class="kill-progress">
           <div class="kill-bar-wrap">
             <div id="kill-bar" class="kill-bar"></div>
@@ -113,6 +119,22 @@
         <button id="btn-run" class="cmd-btn cmd-run" type="button">
           <span class="cmd-icon">💨</span>
           <span class="cmd-label" data-i18n="run">RUN</span>
+        </button>
+        <button id="btn-power" class="cmd-btn cmd-power battle-only hidden" type="button">
+          <span class="cmd-icon">💢</span>
+          <span class="cmd-label" data-i18n="power">POWER</span>
+        </button>
+        <button id="btn-guard" class="cmd-btn cmd-guard battle-only hidden" type="button">
+          <span class="cmd-icon">🛡️</span>
+          <span class="cmd-label" data-i18n="guard">GUARD</span>
+        </button>
+        <button id="btn-taunt" class="cmd-btn cmd-taunt battle-only hidden" type="button">
+          <span class="cmd-icon">😤</span>
+          <span class="cmd-label" data-i18n="tauntBtn">TAUNT</span>
+        </button>
+        <button id="btn-peace" class="cmd-btn cmd-peace battle-only hidden" type="button">
+          <span class="cmd-icon">🕊️</span>
+          <span class="cmd-label" data-i18n="peaceBtn">PEACE</span>
         </button>
       </div>
     </div>
@@ -168,6 +190,11 @@
       </div>
 
       <button id="btn-buy-treat" class="btn btn-secondary" type="button" data-i18n="buyTreat">🦴 Buy Treat (+10% dmg, 10 fights) — 25🪙</button>
+
+      <div class="challenges-section">
+        <h3 data-i18n="challengesTitle">🎯 Challenges</h3>
+        <div id="challenges-list" class="challenges-list"></div>
+      </div>
 
       <div class="progress-section">
         <p id="overall-progress">0 / 110 animals pacified</p>
@@ -236,6 +263,7 @@
   <script src="js/animals.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/taunts.js"></script>
+  <script src="js/fun.js"></script>
   <script src="js/save.js"></script>
   <script src="js/player.js"></script>
   <script src="js/progression.js"></script>
