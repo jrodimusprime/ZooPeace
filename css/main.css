@@ -35,7 +35,20 @@ body {
   user-select: none;
 }
 
-.hidden { display: none !important; }
+.legal-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.85rem;
+}
+
+.legal-link a {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.legal-link a:hover {
+  color: var(--accent);
+}
 
 /* Onboarding */
 .onboarding {
