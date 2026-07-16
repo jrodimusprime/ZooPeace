@@ -13,7 +13,7 @@
   --xp: #48cae4;
   --radius: 12px;
   --nav-height: 64px;
-  --ad-top-height: 50px;
+  --ad-top-height: 50px; /* mobile banner 320×50 */
 }
 
 * {
@@ -264,7 +264,7 @@ body {
   padding-bottom: calc(var(--nav-height) + 16px);
 }
 
-/* Top horizontal banner — full viewport width, short height (not square) */
+/* Top banner: fixed sizes so AdSense serves a real banner (not a clipped square) */
 .ad-top {
   position: fixed;
   top: 0;
@@ -273,6 +273,9 @@ body {
   width: 100%;
   height: calc(var(--ad-top-height) + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface);
   border-bottom: 1px solid var(--card);
   z-index: 150;
@@ -280,25 +283,22 @@ body {
   overflow: hidden;
 }
 
-/* Force a wide banner slot so AdSense doesn't pick a square/rectangle */
+/* Mobile: classic 320×50 leaderboard strip */
 .ad-top-slot {
-  display: block !important;
-  width: 100% !important;
-  height: 50px !important;
-  min-height: 50px !important;
-  max-height: 50px !important;
+  display: inline-block;
+  width: 320px;
+  height: 50px;
 }
 
-/* Large mobile banner on typical phone widths */
-@media (min-width: 360px) {
+/* Desktop / large screens: 728×90 leaderboard */
+@media (min-width: 768px) {
   :root {
-    --ad-top-height: 100px;
+    --ad-top-height: 90px;
   }
 
   .ad-top-slot {
-    height: 100px !important;
-    min-height: 100px !important;
-    max-height: 100px !important;
+    width: 728px;
+    height: 90px;
   }
 }
 
