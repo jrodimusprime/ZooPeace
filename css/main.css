@@ -13,7 +13,7 @@
   --xp: #48cae4;
   --radius: 12px;
   --nav-height: 64px;
-  --ad-top-height: 64px;
+  --ad-top-height: 50px;
 }
 
 * {
@@ -264,16 +264,15 @@ body {
   padding-bottom: calc(var(--nav-height) + 16px);
 }
 
-/* Top horizontal ad — always visible, mobile-safe */
+/* Top horizontal banner — full viewport width, short height (not square) */
 .ad-top {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 480px;
   height: calc(var(--ad-top-height) + env(safe-area-inset-top, 0px));
-  padding: env(safe-area-inset-top, 0px) 8px 0;
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--surface);
   border-bottom: 1px solid var(--card);
   z-index: 150;
@@ -281,11 +280,26 @@ body {
   overflow: hidden;
 }
 
-.ad-top .adsbygoogle {
-  display: block;
-  width: 100%;
-  height: var(--ad-top-height);
-  max-height: var(--ad-top-height);
+/* Force a wide banner slot so AdSense doesn't pick a square/rectangle */
+.ad-top-slot {
+  display: block !important;
+  width: 100% !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+}
+
+/* Large mobile banner on typical phone widths */
+@media (min-width: 360px) {
+  :root {
+    --ad-top-height: 100px;
+  }
+
+  .ad-top-slot {
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: 100px !important;
+  }
 }
 
 /* Buttons */
