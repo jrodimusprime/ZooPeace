@@ -13,6 +13,7 @@
   --xp: #48cae4;
   --radius: 12px;
   --nav-height: 64px;
+  --ad-banner-height: 72px;
 }
 
 * {
@@ -60,6 +61,7 @@ body {
   min-height: 100dvh;
   padding: 24px;
   background: linear-gradient(160deg, var(--bg) 0%, #1b4332 100%);
+  overflow-y: auto;
 }
 
 .onboarding-card {
@@ -69,6 +71,7 @@ body {
   width: 100%;
   max-width: 400px;
   text-align: center;
+  margin: auto;
 }
 
 .onboarding-card h1 {
@@ -255,7 +258,78 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  padding-bottom: calc(var(--nav-height) + 16px);
+  padding-bottom: calc(var(--nav-height) + var(--ad-banner-height) + 16px);
+}
+
+/* Ads */
+.ad-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.ad-unit {
+  margin: 12px 0;
+  text-align: center;
+}
+
+.ad-unit-header {
+  margin: 8px 0 0;
+}
+
+.ad-slot {
+  min-height: 50px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed var(--card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ad-slot-empty {
+  min-height: 50px;
+}
+
+.ad-slot-victory {
+  min-height: 250px;
+  margin: 8px 0 12px;
+}
+
+.ad-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  width: 100%;
+  max-width: 480px;
+  height: var(--ad-banner-height);
+  padding: 4px 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--card);
+  z-index: 95;
+  box-sizing: border-box;
+}
+
+.ad-banner .ad-slot {
+  min-height: 50px;
+  height: 50px;
+}
+
+.victory-ad-card {
+  max-width: 360px;
+}
+
+.victory-ad-countdown {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 8px 0 12px;
+}
+
+.btn-waiting {
+  opacity: 0.7;
 }
 
 /* Buttons */

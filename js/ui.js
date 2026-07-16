@@ -492,12 +492,25 @@ const UI = (() => {
       setText('#victory-message', t('zooPeaceAchieved'));
     }
 
-    $('#victory-modal')?.classList.remove('hidden');
     renderFightHeader();
+
+    // Show a 5s ad interstitial before victory rewards
+    if (typeof Ads !== 'undefined' && Ads.presentVictoryAd) {
+      Ads.presentVictoryAd().then(showVictoryRewards);
+    } else {
+      showVictoryRewards();
+    }
+  }
+
+  function showVictoryRewards() {
+    if (typeof Ads !== 'undefined') Ads.hideVictoryAd();
+    applyStaticI18n();
+    $('#victory-modal')?.classList.remove('hidden');
   }
 
   function hideVictoryModal() {
     $('#victory-modal')?.classList.add('hidden');
+    if (typeof Ads !== 'undefined') Ads.hideVictoryAd();
     if (save.gameComplete) {
       $('#finale-overlay')?.classList.remove('hidden');
       applyStaticI18n();
@@ -665,5 +678,6 @@ const UI = (() => {
     ensureCombat,
     startGame,
     changeLanguage,
+    showVictoryRewards,
   };
 })();

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const save = loadSave();
   UI.init(save);
   UI.boot(save);
+  if (typeof Ads !== 'undefined') Ads.init();
 
   const params = new URLSearchParams(location.search);
 
