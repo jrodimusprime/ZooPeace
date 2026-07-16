@@ -46,23 +46,22 @@ const GameplaySim = {
 
     const save = createDefaultSave();
 
-    // Starter batch is only 3 animals
+    // Starter batch is only 2 animals
     const level1Samples = [];
     for (let i = 0; i < 200; i++) {
       level1Samples.push(selectNextEncounter(save));
     }
     const level1Min = Math.min(...level1Samples);
-    this.assert(level1Min >= 107, 'starter samples stay in the first batch of 3');
+    this.assert(level1Min >= 108, 'starter samples stay in the first batch of 2');
     this.assert(!level1Samples.includes(0), 'starter never rolls whale');
-    this.assert(getUnlockedAnimalCount(save) === 3, 'new save has 3 unlocked');
+    this.assert(getUnlockedAnimalCount(save) === 2, 'new save has 2 unlocked');
 
     // Pool expands by pacifying the current batch, not by level
     save.level = 20;
-    this.assert(getUnlockedAnimalCount(save) === 3, 'level alone does not expand the pool');
-    save.killCounts['107'] = KILLS_PER_ANIMAL;
+    this.assert(getUnlockedAnimalCount(save) === 2, 'level alone does not expand the pool');
     save.killCounts['108'] = KILLS_PER_ANIMAL;
     save.killCounts['109'] = KILLS_PER_ANIMAL;
-    this.assert(getUnlockedAnimalCount(save) === 6, 'pacifying a batch unlocks 3 more');
+    this.assert(getUnlockedAnimalCount(save) === 4, 'pacifying a batch unlocks 2 more');
 
     // Rarity weighting in a mid-size unlocked pool
     for (let i = 100; i < 110; i++) save.killCounts[String(i)] = KILLS_PER_ANIMAL;
@@ -83,14 +82,14 @@ const GameplaySim = {
     }
     this.assert(pacifiedHits < 40, 'pacified animals appear less often');
 
-    // Flee rate during combat (~70%)
+    // Flee rate during combat (~55%)
     let fleeSuccess = 0;
     const fleeTrials = 500;
     for (let i = 0; i < fleeTrials; i++) {
-      if (Math.random() < 0.7) fleeSuccess++;
+      if (Math.random() < 0.55) fleeSuccess++;
     }
     const fleeRate = fleeSuccess / fleeTrials;
-    this.assert(fleeRate > 0.6 && fleeRate < 0.8, `flee RNG near 70% (got ${(fleeRate * 100).toFixed(0)}%)`);
+    this.assert(fleeRate > 0.45 && fleeRate < 0.65, `flee RNG near 55% (got ${(fleeRate * 100).toFixed(0)}%)`);
 
     // Combat: starter should beat small animal
     const starter = getPlayerCombatStats(save);
@@ -98,10 +97,10 @@ const GameplaySim = {
     const vsAnt = this.simulateCombat(starter, ant);
     this.assert(vsAnt === 'win', 'starter beats ant');
 
-    // Soft-cap prevents early death loops vs fast bugs
+    // Soft-caps still bound early threat (looser than before, but finite)
     const scorpion = getAnimalStats(106, 1);
-    this.assert(scorpion.spd <= 2, 'scorpion speed soft-capped at level 1');
-    this.assert(scorpion.atk <= 8, 'scorpion attack soft-capped at level 1');
+    this.assert(scorpion.spd <= 3, 'scorpion speed soft-capped at level 1');
+    this.assert(scorpion.atk <= 11, 'scorpion attack soft-capped at level 1');
 
     // Combat: starter should lose to whale (huge HP)
     const whale = getAnimalStats(0, 1);

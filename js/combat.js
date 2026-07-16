@@ -37,7 +37,8 @@ const Combat = (() => {
   }
 
   function calcDamage(atk, def) {
-    const raw = atk - def * 0.5;
+    // Defence matters more — fights last longer and punish low DEF.
+    const raw = atk - def * 0.7;
     return variance(Math.max(1, raw));
   }
 
@@ -196,12 +197,12 @@ const Combat = (() => {
     if (state.enemy.hp / state.enemy.maxHp > 0.3) return false;
     peaceUsed = true;
 
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.35) {
       state.enemy.hp = 0;
       flash(t('flash_peace_yes'));
       checkVictory();
     } else {
-      state.enemy.hp = Math.min(state.enemy.maxHp, Math.floor(state.enemy.hp + state.enemy.maxHp * 0.2));
+      state.enemy.hp = Math.min(state.enemy.maxHp, Math.floor(state.enemy.hp + state.enemy.maxHp * 0.25));
       flash(t('flash_peace_no'));
       doEnemyAttack({ forced: true });
     }
@@ -211,7 +212,7 @@ const Combat = (() => {
 
   function flee() {
     if (!state || state.enemy.hp <= 0 || state.playerHp <= 0 || defeatHandled) return false;
-    const success = !state.fighting || Math.random() < 0.7;
+    const success = !state.fighting || Math.random() < 0.55;
     if (success) {
       state.fighting = false;
       engaged = false;

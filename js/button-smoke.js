@@ -93,7 +93,7 @@ const ButtonSmoke = {
 
     // Soft-cap: level-1 scorpion should not melt players
     const scorp = getAnimalStats(106, 1);
-    this.assert(scorp.spd <= 2 && scorp.atk <= 8, 'level-1 scorpion is soft-capped');
+    this.assert(scorp.spd <= 3 && scorp.atk <= 11, 'level-1 scorpion is soft-capped');
 
     const passed = this.results.filter((r) => r.pass).length;
     const total = this.results.length;
